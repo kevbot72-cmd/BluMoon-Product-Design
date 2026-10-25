@@ -1,0 +1,37 @@
+{
+	"schemaVersion": 1,
+	"productId": 42,
+	"variationId": 0,
+	"mode": "gallery",
+	"units": "mm",
+	"sides": {
+		"front": {
+			"printAreas": {
+				"pa1": {
+					"elements": [
+						{
+							"id": "e1", "type": "text", "x": 20, "y": 30, "w": 120, "h": 18, "rotation": 0,
+							"text": "Happy 30th, Sam",
+							"font": { "family": "Inter", "weight": 700, "sizePt": 14 },
+							"fill": "#1A1A1A", "align": "center",
+							"effect": { "kind": "arc", "radiusMm": 140, "direction": "up" }
+						},
+						{
+							"id": "e2", "type": "image", "x": 0, "y": 0, "w": 80, "h": 60,
+							"source": { "kind": "upload", "uploadId": "u_8f3a91c2d4e5f6a7b8c9" },
+							"naturalPx": { "w": 3024, "h": 4032 },
+							"crop": { "x": 0.1, "y": 0, "w": 0.8, "h": 1 },
+							"preset": "vivid"
+						},
+						{
+							"id": "e3", "type": "qr", "x": 250, "y": 160, "w": 30, "h": 30,
+							"payload": { "kind": "url", "url": "https://example.com/sam" },
+							"fg": "#000000", "bg": "#FFFFFF"
+						}
+					]
+				}
+			}
+		}
+	},
+	"options": { "productColor": "#ffffff" }
+}

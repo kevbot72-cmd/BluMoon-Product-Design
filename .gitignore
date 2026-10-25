@@ -1,0 +1,11 @@
+# Proprietary reference plugins: study only, never commit or ship
+/reference/
+node_modules/
+vendor/
+assets/dist/
+.wp-env.override.json
+coverage/
+test-results/
+playwright-report/
+*.log
+.DS_Store

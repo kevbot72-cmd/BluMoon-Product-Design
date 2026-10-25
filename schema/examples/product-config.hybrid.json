@@ -1,0 +1,31 @@
+{
+	"schemaVersion": 1,
+	"enabled": true,
+	"modes": ["gallery", "template"],
+	"defaultMode": "gallery",
+	"blueprintId": 123,
+	"gallery": {
+		"source": "first_gallery_image",
+		"fit": "contain",
+		"templateOpacity": 0.25,
+		"sides": [{
+			"id": "front",
+			"label": "Front",
+			"base": { "attachmentId": 456, "widthPx": 1640, "heightPx": 1120 },
+			"printAreas": [{
+				"id": "pa1",
+				"shape": "rect",
+				"rect": { "x": 0.25, "y": 0.2679, "w": 0.5, "h": 0.3417 },
+				"sizeMm": { "w": 300, "h": 205 },
+				"bleedMm": 3, "safeMm": 5, "dpi": 300, "clip": true
+			}]
+		}]
+	},
+	"preview3d": {
+		"modelId": 789,
+		"meshMap": [{ "mesh": "Print_Front", "side": "front", "printArea": "pa1" }],
+		"colorLink": { "attribute": "pa_color", "mesh": "Body" },
+		"camera": { "front": { "azimuth": 0, "polar": 80, "distance": 2.2 } }
+	},
+	"pricing": { "basePerSide": { "front": 0, "back": 50 } }
+}

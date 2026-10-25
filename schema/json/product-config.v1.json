@@ -1,0 +1,741 @@
+{
+	"$schema": "https://json-schema.org/draft/2020-12/schema",
+	"type": "object",
+	"properties": {
+		"schemaVersion": {
+			"type": "number",
+			"const": 1
+		},
+		"enabled": {
+			"type": "boolean"
+		},
+		"modes": {
+			"minItems": 1,
+			"maxItems": 2,
+			"type": "array",
+			"items": {
+				"$ref": "#/$defs/__schema0"
+			}
+		},
+		"defaultMode": {
+			"type": "string",
+			"enum": [
+				"template",
+				"gallery"
+			]
+		},
+		"required": {
+			"default": false,
+			"type": "boolean"
+		},
+		"blueprintId": {
+			"default": null,
+			"anyOf": [
+				{
+					"type": "integer",
+					"exclusiveMinimum": 0,
+					"maximum": 9007199254740991
+				},
+				{
+					"type": "null"
+				}
+			]
+		},
+		"gallery": {
+			"default": null,
+			"anyOf": [
+				{
+					"type": "object",
+					"properties": {
+						"source": {
+							"default": "first_gallery_image",
+							"type": "string",
+							"enum": [
+								"first_gallery_image",
+								"featured_image",
+								"variation_image",
+								"attachment"
+							]
+						},
+						"attachmentId": {
+							"default": null,
+							"anyOf": [
+								{
+									"type": "integer",
+									"exclusiveMinimum": 0,
+									"maximum": 9007199254740991
+								},
+								{
+									"type": "null"
+								}
+							]
+						},
+						"useGalleryAsSides": {
+							"default": false,
+							"type": "boolean"
+						},
+						"fit": {
+							"default": "contain",
+							"type": "string",
+							"enum": [
+								"contain",
+								"cover"
+							]
+						},
+						"baseLayersBelow": {
+							"default": 0,
+							"type": "integer",
+							"minimum": 0,
+							"maximum": 50
+						},
+						"templateOpacity": {
+							"default": 1,
+							"type": "number",
+							"minimum": 0,
+							"maximum": 1
+						},
+						"dimOnlyLayerTitles": {
+							"default": [],
+							"type": "array",
+							"items": {
+								"type": "string",
+								"maxLength": 120
+							}
+						},
+						"dimmedInPreview3d": {
+							"default": true,
+							"type": "boolean"
+						},
+						"includeBaseInPrint": {
+							"default": false,
+							"type": "boolean"
+						},
+						"templateId": {
+							"default": null,
+							"anyOf": [
+								{
+									"type": "integer",
+									"exclusiveMinimum": 0,
+									"maximum": 9007199254740991
+								},
+								{
+									"type": "null"
+								}
+							]
+						},
+						"sides": {
+							"minItems": 1,
+							"maxItems": 12,
+							"type": "array",
+							"items": {
+								"$ref": "#/$defs/__schema1"
+							}
+						}
+					},
+					"required": [
+						"sides"
+					]
+				},
+				{
+					"type": "null"
+				}
+			]
+		},
+		"preview3d": {
+			"default": null,
+			"anyOf": [
+				{
+					"type": "object",
+					"properties": {
+						"modelId": {
+							"type": "integer",
+							"exclusiveMinimum": 0,
+							"maximum": 9007199254740991
+						},
+						"meshMap": {
+							"maxItems": 24,
+							"type": "array",
+							"items": {
+								"$ref": "#/$defs/__schema9"
+							}
+						},
+						"texture": {
+							"default": {
+								"source": "design_only",
+								"background": "transparent",
+								"maxSize": 2048,
+								"includeBleed": false
+							},
+							"type": "object",
+							"properties": {
+								"source": {
+									"default": "design_only",
+									"type": "string",
+									"enum": [
+										"design_only",
+										"design_over_base_crop",
+										"design_over_color"
+									]
+								},
+								"background": {
+									"default": "transparent",
+									"anyOf": [
+										{
+											"type": "string",
+											"const": "transparent"
+										},
+										{
+											"$ref": "#/$defs/__schema10"
+										}
+									]
+								},
+								"maxSize": {
+									"default": 2048,
+									"anyOf": [
+										{
+											"type": "number",
+											"const": 512
+										},
+										{
+											"type": "number",
+											"const": 1024
+										},
+										{
+											"type": "number",
+											"const": 2048
+										},
+										{
+											"type": "number",
+											"const": 4096
+										}
+									]
+								},
+								"includeBleed": {
+									"default": false,
+									"type": "boolean"
+								}
+							}
+						},
+						"colorLink": {
+							"default": null,
+							"anyOf": [
+								{
+									"type": "object",
+									"properties": {
+										"attribute": {
+											"type": "string",
+											"maxLength": 100
+										},
+										"mesh": {
+											"type": "string",
+											"maxLength": 200
+										}
+									},
+									"required": [
+										"attribute",
+										"mesh"
+									]
+								},
+								{
+									"type": "null"
+								}
+							]
+						},
+						"camera": {
+							"default": {},
+							"type": "object",
+							"propertyNames": {
+								"$ref": "#/$defs/__schema2"
+							},
+							"additionalProperties": {
+								"type": "object",
+								"properties": {
+									"azimuth": {
+										"type": "number"
+									},
+									"polar": {
+										"type": "number"
+									},
+									"distance": {
+										"type": "number",
+										"exclusiveMinimum": 0
+									}
+								},
+								"required": [
+									"azimuth",
+									"polar",
+									"distance"
+								]
+							}
+						}
+					},
+					"required": [
+						"modelId",
+						"meshMap"
+					]
+				},
+				{
+					"type": "null"
+				}
+			]
+		},
+		"pricing": {
+			"default": {
+				"basePerSide": {},
+				"perTextElement": 0,
+				"perImage": 0,
+				"printMethodId": null,
+				"templateFee": true
+			},
+			"type": "object",
+			"properties": {
+				"basePerSide": {
+					"default": {},
+					"type": "object",
+					"propertyNames": {
+						"$ref": "#/$defs/__schema2"
+					},
+					"additionalProperties": {
+						"type": "number",
+						"minimum": 0
+					}
+				},
+				"perTextElement": {
+					"default": 0,
+					"type": "number",
+					"minimum": 0
+				},
+				"perImage": {
+					"default": 0,
+					"type": "number",
+					"minimum": 0
+				},
+				"printMethodId": {
+					"default": null,
+					"anyOf": [
+						{
+							"type": "integer",
+							"exclusiveMinimum": 0,
+							"maximum": 9007199254740991
+						},
+						{
+							"type": "null"
+						}
+					]
+				},
+				"templateFee": {
+					"default": true,
+					"type": "boolean"
+				}
+			}
+		},
+		"variations": {
+			"default": {},
+			"type": "object",
+			"propertyNames": {
+				"type": "string",
+				"pattern": "^\\d+$"
+			},
+			"additionalProperties": {
+				"type": "object",
+				"properties": {
+					"blueprintId": {
+						"type": "integer",
+						"exclusiveMinimum": 0,
+						"maximum": 9007199254740991
+					},
+					"productColor": {
+						"$ref": "#/$defs/__schema10"
+					},
+					"modelColor": {
+						"$ref": "#/$defs/__schema10"
+					},
+					"baseImages": {
+						"type": "object",
+						"propertyNames": {
+							"$ref": "#/$defs/__schema2"
+						},
+						"additionalProperties": {
+							"$ref": "#/$defs/__schema3"
+						}
+					}
+				}
+			}
+		}
+	},
+	"required": [
+		"schemaVersion",
+		"enabled",
+		"modes",
+		"defaultMode"
+	],
+	"$defs": {
+		"__schema0": {
+			"type": "string",
+			"enum": [
+				"template",
+				"gallery"
+			]
+		},
+		"__schema1": {
+			"type": "object",
+			"properties": {
+				"id": {
+					"$ref": "#/$defs/__schema2"
+				},
+				"label": {
+					"type": "string",
+					"maxLength": 60
+				},
+				"base": {
+					"anyOf": [
+						{
+							"$ref": "#/$defs/__schema3"
+						},
+						{
+							"type": "null"
+						}
+					]
+				},
+				"overlay": {
+					"default": null,
+					"anyOf": [
+						{
+							"type": "object",
+							"properties": {
+								"attachmentId": {
+									"$ref": "#/$defs/__schema4"
+								},
+								"widthPx": {
+									"$ref": "#/$defs/__schema5"
+								},
+								"heightPx": {
+									"$ref": "#/$defs/__schema6"
+								},
+								"blend": {
+									"default": "multiply",
+									"type": "string",
+									"enum": [
+										"multiply",
+										"screen",
+										"normal"
+									]
+								}
+							},
+							"required": [
+								"attachmentId",
+								"widthPx",
+								"heightPx"
+							]
+						},
+						{
+							"type": "null"
+						}
+					]
+				},
+				"mask": {
+					"default": null,
+					"anyOf": [
+						{
+							"$ref": "#/$defs/__schema3"
+						},
+						{
+							"type": "null"
+						}
+					]
+				},
+				"printAreas": {
+					"minItems": 1,
+					"maxItems": 8,
+					"type": "array",
+					"items": {
+						"$ref": "#/$defs/__schema7"
+					}
+				}
+			},
+			"required": [
+				"id",
+				"label",
+				"base",
+				"printAreas"
+			]
+		},
+		"__schema2": {
+			"type": "string",
+			"pattern": "^[A-Za-z0-9_-]{1,64}$"
+		},
+		"__schema3": {
+			"type": "object",
+			"properties": {
+				"attachmentId": {
+					"$ref": "#/$defs/__schema4"
+				},
+				"widthPx": {
+					"$ref": "#/$defs/__schema5"
+				},
+				"heightPx": {
+					"$ref": "#/$defs/__schema6"
+				}
+			},
+			"required": [
+				"attachmentId",
+				"widthPx",
+				"heightPx"
+			]
+		},
+		"__schema4": {
+			"type": "integer",
+			"exclusiveMinimum": 0,
+			"maximum": 9007199254740991
+		},
+		"__schema5": {
+			"type": "integer",
+			"exclusiveMinimum": 0,
+			"maximum": 9007199254740991
+		},
+		"__schema6": {
+			"type": "integer",
+			"exclusiveMinimum": 0,
+			"maximum": 9007199254740991
+		},
+		"__schema7": {
+			"type": "object",
+			"properties": {
+				"id": {
+					"$ref": "#/$defs/__schema2"
+				},
+				"label": {
+					"default": "",
+					"type": "string",
+					"maxLength": 60
+				},
+				"shape": {
+					"default": "rect",
+					"type": "string",
+					"enum": [
+						"rect",
+						"roundedRect",
+						"ellipse",
+						"path"
+					]
+				},
+				"cornerRadiusMm": {
+					"default": 0,
+					"type": "number",
+					"minimum": 0
+				},
+				"pathD": {
+					"default": null,
+					"anyOf": [
+						{
+							"type": "string",
+							"maxLength": 20000
+						},
+						{
+							"type": "null"
+						}
+					]
+				},
+				"rect": {
+					"type": "object",
+					"properties": {
+						"x": {
+							"type": "number",
+							"minimum": 0,
+							"maximum": 1
+						},
+						"y": {
+							"type": "number",
+							"minimum": 0,
+							"maximum": 1
+						},
+						"w": {
+							"type": "number",
+							"exclusiveMinimum": 0,
+							"maximum": 1
+						},
+						"h": {
+							"type": "number",
+							"exclusiveMinimum": 0,
+							"maximum": 1
+						}
+					},
+					"required": [
+						"x",
+						"y",
+						"w",
+						"h"
+					]
+				},
+				"quad": {
+					"default": null,
+					"anyOf": [
+						{
+							"type": "array",
+							"prefixItems": [
+								{
+									"$ref": "#/$defs/__schema8"
+								},
+								{
+									"$ref": "#/$defs/__schema8"
+								},
+								{
+									"$ref": "#/$defs/__schema8"
+								},
+								{
+									"$ref": "#/$defs/__schema8"
+								}
+							],
+							"items": false,
+							"minItems": 4,
+							"maxItems": 4
+						},
+						{
+							"type": "null"
+						}
+					]
+				},
+				"sizeMm": {
+					"type": "object",
+					"properties": {
+						"w": {
+							"type": "number",
+							"exclusiveMinimum": 0,
+							"maximum": 10000
+						},
+						"h": {
+							"type": "number",
+							"exclusiveMinimum": 0,
+							"maximum": 10000
+						}
+					},
+					"required": [
+						"w",
+						"h"
+					]
+				},
+				"bleedMm": {
+					"default": 3,
+					"type": "number",
+					"minimum": 0,
+					"maximum": 50
+				},
+				"safeMm": {
+					"default": 5,
+					"type": "number",
+					"minimum": 0,
+					"maximum": 100
+				},
+				"dpi": {
+					"default": 300,
+					"type": "integer",
+					"minimum": 72,
+					"maximum": 1200
+				},
+				"clip": {
+					"default": true,
+					"type": "boolean"
+				}
+			},
+			"required": [
+				"id",
+				"rect",
+				"sizeMm"
+			]
+		},
+		"__schema8": {
+			"type": "array",
+			"prefixItems": [
+				{
+					"type": "number",
+					"minimum": 0,
+					"maximum": 1
+				},
+				{
+					"type": "number",
+					"minimum": 0,
+					"maximum": 1
+				}
+			],
+			"items": false,
+			"minItems": 2,
+			"maxItems": 2
+		},
+		"__schema9": {
+			"type": "object",
+			"properties": {
+				"mesh": {
+					"type": "string",
+					"minLength": 1,
+					"maxLength": 200
+				},
+				"side": {
+					"$ref": "#/$defs/__schema2"
+				},
+				"printArea": {
+					"$ref": "#/$defs/__schema2"
+				},
+				"uvRect": {
+					"default": [
+						0,
+						0,
+						1,
+						1
+					],
+					"type": "array",
+					"prefixItems": [
+						{
+							"type": "number"
+						},
+						{
+							"type": "number"
+						},
+						{
+							"type": "number"
+						},
+						{
+							"type": "number"
+						}
+					],
+					"items": false,
+					"minItems": 4,
+					"maxItems": 4
+				},
+				"rotation": {
+					"default": 0,
+					"anyOf": [
+						{
+							"type": "number",
+							"const": 0
+						},
+						{
+							"type": "number",
+							"const": 90
+						},
+						{
+							"type": "number",
+							"const": 180
+						},
+						{
+							"type": "number",
+							"const": 270
+						}
+					]
+				},
+				"flipY": {
+					"default": false,
+					"type": "boolean"
+				}
+			},
+			"required": [
+				"mesh",
+				"side",
+				"printArea"
+			]
+		},
+		"__schema10": {
+			"type": "string",
+			"pattern": "^#(?:[0-9a-fA-F]{3}|[0-9a-fA-F]{6}|[0-9a-fA-F]{8})$"
+		}
+	}
+}
