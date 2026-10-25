@@ -28,10 +28,13 @@ unzip -q woocommerce.zip -d wordpress/wp-content/plugins && rm woocommerce.zip
 # The plugin under test is loaded from the plugins directory, as WordPress does.
 ln -sfn "$OLDPWD" wordpress/wp-content/plugins/blumoon-product-studio
 
-host=${WP_DB_HOST:-127.0.0.1:3306}
-mysqladmin --host="${host%%:*}" --port="${host##*:}" --protocol=tcp \
-	--user="${WP_DB_USER:-root}" --password="${WP_DB_PASSWORD:-root}" \
-	create "${WP_DB_NAME:-wp_tests}" 2>/dev/null || true
+# Create the test database with PHP's mysqli, which the tests need anyway.
+php -r '
+	[$host, $port] = array_pad(explode(":", getenv("WP_DB_HOST") ?: "127.0.0.1:3306"), 2, "3306");
+	$db = new mysqli($host, getenv("WP_DB_USER") ?: "root", getenv("WP_DB_PASSWORD") ?: "root", "", (int) $port);
+	$name = getenv("WP_DB_NAME") ?: "wp_tests";
+	$db->query("CREATE DATABASE IF NOT EXISTS `" . $db->real_escape_string($name) . "`") or exit(1);
+'
 
 echo "WordPress $(grep -o "wp_version = '[^']*'" wordpress/wp-includes/version.php) and WooCommerce ready in $dir/wordpress"
 echo "Run: WP_CORE_DIR=$dir/wordpress composer test:integration"

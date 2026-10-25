@@ -63,6 +63,10 @@ tests_add_filter(
 	'setup_theme',
 	static function (): void {
 		WC_Install::install();
+		// Reload roles so WooCommerce's new capabilities are seen on a fresh database
+		// (as WooCommerce's own test bootstrap does; core ticket #28374).
+		$GLOBALS['wp_roles'] = null; // phpcs:ignore WordPress.WP.GlobalVariablesOverride.Prohibited
+		wp_roles();
 		// CI runs the suite with HPOS on and off (BPS_TEST_HPOS=on|off).
 		if ( false !== getenv( 'BPS_TEST_HPOS' ) ) {
 			$hpos = 'on' === getenv( 'BPS_TEST_HPOS' );
