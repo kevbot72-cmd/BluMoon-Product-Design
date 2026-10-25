@@ -46,6 +46,56 @@ final class Storage {
 	}
 
 	/**
+	 * Create a new, unguessable directory for one upload: u/YYYY/MM/<random>.
+	 *
+	 * @throws \RuntimeException When it can't be created.
+	 */
+	public function newUploadDir(): string {
+		$dir = $this->root() . '/u/' . gmdate( 'Y/m' ) . '/' . bin2hex( random_bytes( 12 ) );
+		if ( ! wp_mkdir_p( $dir ) ) {
+			throw new \RuntimeException( 'Cannot create upload directory.' );
+		}
+		return $dir;
+	}
+
+	/**
+	 * Path relative to the private root, for storing in the database.
+	 *
+	 * @param string $absolute Absolute path inside the root.
+	 */
+	public function relative( string $absolute ): string {
+		return ltrim( substr( $absolute, strlen( $this->root() ) ), '/' );
+	}
+
+	/**
+	 * Absolute path for a stored relative path; null if it escapes the root.
+	 *
+	 * @param string $relative Path from the database.
+	 */
+	public function absolute( string $relative ): ?string {
+		if ( '' === $relative || str_contains( $relative, '..' ) || str_contains( $relative, "\0" ) ) {
+			return null;
+		}
+		$path = $this->root() . '/' . ltrim( $relative, '/' );
+		return is_file( $path ) ? $path : null;
+	}
+
+	/**
+	 * Remove a directory created by newUploadDir() and its files.
+	 *
+	 * @param string $dir Absolute directory path.
+	 */
+	public function removeDir( string $dir ): void {
+		if ( ! str_starts_with( $dir, $this->root() . '/u/' ) || ! is_dir( $dir ) ) {
+			return;
+		}
+		foreach ( (array) glob( $dir . '/*' ) as $file ) {
+			wp_delete_file( (string) $file );
+		}
+		rmdir( $dir ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_rmdir -- our own private directory.
+	}
+
+	/**
 	 * Whether the root exists and is writable.
 	 */
 	public function isWritable(): bool {

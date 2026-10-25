@@ -10,6 +10,9 @@ declare(strict_types=1);
 namespace Blumoon\ProductStudio\Infrastructure;
 
 use Blumoon\ProductStudio\Container;
+use Blumoon\ProductStudio\Infrastructure\Image\ImagePipeline;
+use Blumoon\ProductStudio\Infrastructure\Image\SvgSanitizer;
+use Blumoon\ProductStudio\Infrastructure\Repository\UploadRepository;
 use Blumoon\ProductStudio\Migration\Tables;
 use Blumoon\ProductStudio\ServiceProvider;
 
@@ -27,6 +30,20 @@ final class InfrastructureProvider implements ServiceProvider {
 		$container->set( Settings::class, static fn (): Settings => new Settings() );
 		$container->set( Storage::class, static fn (): Storage => new Storage() );
 		$container->set( Tables::class, static fn (): Tables => new Tables() );
+		$container->set( SvgSanitizer::class, static fn (): SvgSanitizer => new SvgSanitizer() );
+		$container->set(
+			ImagePipeline::class,
+			static fn ( Container $c ): ImagePipeline => new ImagePipeline(
+				(int) $c->get( Settings::class )->get( 'uploads.maxMb' ) * MB_IN_BYTES,
+				(int) $c->get( Settings::class )->get( 'uploads.maxPx' ),
+				(array) $c->get( Settings::class )->get( 'uploads.formats' ),
+				$c->get( SvgSanitizer::class )
+			)
+		);
+		$container->set( UploadRepository::class, static fn (): UploadRepository => new UploadRepository() );
+		$container->set( RateLimiter::class, static fn (): RateLimiter => new RateLimiter() );
+		// A key derived from the site's auth salt, separate from WordPress's own uses of it.
+		$container->set( SignedUrls::class, static fn (): SignedUrls => new SignedUrls( hash_hmac( 'sha256', 'bps-signed-files', wp_salt( 'auth' ) ) ) );
 		$container->set(
 			GuestToken::class,
 			static fn ( Container $c ): GuestToken => new GuestToken(

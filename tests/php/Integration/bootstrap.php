@@ -58,6 +58,13 @@ function bps_test_container(): \Blumoon\ProductStudio\Container {
 	return $container;
 }
 tests_add_filter( 'bps/loaded', 'bps_test_container' );
+// Guests in tests: no real cookie can be sent once PHPUnit has printed output.
+tests_add_filter(
+	'bps/loaded',
+	static function ( \Blumoon\ProductStudio\Container $container ): void {
+		$container->set( \Blumoon\ProductStudio\Infrastructure\GuestToken::class, static fn () => new \Blumoon\ProductStudio\Infrastructure\GuestToken( array(), HOUR_IN_SECONDS, static fn (): bool => true ) );
+	}
+);
 
 tests_add_filter(
 	'setup_theme',

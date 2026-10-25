@@ -9,17 +9,19 @@ declare(strict_types=1);
 
 namespace Blumoon\ProductStudio\Domain;
 
+use Blumoon\ProductStudio\Assets\AssetLibrary;
 use Blumoon\ProductStudio\Cli\Commands;
 use Blumoon\ProductStudio\Container;
 use Blumoon\ProductStudio\Domain\Blueprint\BlueprintRepository;
 use Blumoon\ProductStudio\Domain\Editor\EditorBootstrap;
 use Blumoon\ProductStudio\Domain\Product\ProductConfigRepository;
 use Blumoon\ProductStudio\Domain\Schema\SchemaValidator;
+use Blumoon\ProductStudio\Infrastructure\Image\SvgSanitizer;
 use Blumoon\ProductStudio\Infrastructure\Settings;
 use Blumoon\ProductStudio\ServiceProvider;
 
 /**
- * Schemas, blueprints, product configs, the editor bootstrap and WP-CLI.
+ * Schemas, blueprints, product configs, the clipart library, the editor bootstrap and WP-CLI.
  */
 final class DomainProvider implements ServiceProvider {
 
@@ -40,6 +42,7 @@ final class DomainProvider implements ServiceProvider {
 				$c->get( Settings::class )
 			)
 		);
+		$container->set( AssetLibrary::class, static fn ( Container $c ): AssetLibrary => new AssetLibrary( $c->get( SvgSanitizer::class ) ) );
 		$container->set( Commands::class, static fn ( Container $c ): Commands => new Commands( $c->get( BlueprintRepository::class ), $c->get( ProductConfigRepository::class ) ) );
 	}
 
@@ -50,6 +53,7 @@ final class DomainProvider implements ServiceProvider {
 	 */
 	public function boot( Container $container ): void {
 		add_action( 'init', array( BlueprintRepository::class, 'registerPostType' ) );
+		$container->get( AssetLibrary::class )->register();
 		if ( defined( 'WP_CLI' ) && WP_CLI ) {
 			\WP_CLI::add_command( 'bps', $container->get( Commands::class ) );
 		}

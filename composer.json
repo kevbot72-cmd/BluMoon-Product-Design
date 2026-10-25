@@ -5,6 +5,7 @@
 	"license": "GPL-2.0-or-later",
 	"require": {
 		"php": ">=8.2",
+		"enshrined/svg-sanitize": "^1.1",
 		"opis/json-schema": "^2.6"
 	},
 	"require-dev": {
