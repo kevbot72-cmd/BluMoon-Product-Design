@@ -1,6 +1,6 @@
 # Build plan
 
-Status: **Phase 0 complete, waiting for approval.** Nothing in Phase 1+ starts until you sign off on §4 (decisions) and answer §5 (questions).
+Status: **Phase 1 complete (2026-10-25).** Answers are recorded in §5. Next: Phase 2, editor core.
 
 Phase 0 deliverables:
 - `docs/REFERENCE-NOTES.md`: what the four reference plugins do, with line references
@@ -95,18 +95,20 @@ Each milestone ends with lint + all tests green, a commit, and a short summary (
 
 The rest (Preact, a single Vite build, immer patches) is cheap to change. I'll proceed with them unless you object.
 
-## 5. Open questions (BUILD_PROMPT §19 plus what I found)
+## 5. Answers from the owner (2026-10-25)
 
-1. **Name / slug / text domain / accent.** Keep "Blumoon Product Studio" / `blumoon-product-studio` / `bps`? Accent: your current editor uses violet ≈ `#6C4BE0`. Use that?
-2. **Minimum versions.** PHP **8.2** (see ADR-0012), WP 6.6+, Woo 9.x+. What PHP version does production run?
-3. **Imagick** on production? It's needed for HEIC, best PDF assembly and CMYK. If not, GD + TCPDF still works, without HEIC or CMYK.
-4. **First products.** Your screenshot shows a mug with Right/Left sides. Is the mug the first test product? Which others (signage, frames, apparel)? Do you have GLB models, or only FPD `.fbx` folders to import?
-5. **Lumise data**: do templates, cliparts or fonts need importing from a live database? Can you provide a DB export (or confirm the sample SQL is representative)?
-6. **Currency / locale**: ZAR, `en_ZA`? Any multi-currency plugin (WOOCS, CURCY, Aelia)?
-7. **Guest saving** allowed? Retention for unordered designs and uploads: 30 days?
-8. **Print shop formats**: PDF/X required? PNG only? CMYK? Preferred bleed (3 mm?) and crop marks?
-9. **Source control**: is there a GitHub repo to push to? Right now the project is a local git repo in this cloud session. **It will be lost when the session ends unless it's pushed somewhere** (or you download it).
+| # | Question | Answer | Consequence |
+|---|---|---|---|
+| 1 | Name / prefix / accent | Keep "Blumoon Product Studio", `bps`, `Blumoon\ProductStudio`; accent `#6C4BE0` | Default theme token `--bps-accent: #6c4be0` |
+| 2 | PHP version | Production runs the latest PHP | ADR-0012 accepted: **PHP 8.2 minimum**, TCPDF 7. CI tests 8.2 and the latest |
+| 3 | Imagick | Installed | HEIC, PDF assembly and CMYK via Imagick are in scope. GD remains a fallback |
+| 4 | 3D models | Existing FPD `.fbx` folders | FPD 3D importer is required (Phase 9 importer, FBX runtime loading in Phase 5) |
+| 5 | Lumise data | Templates, clipart and fonts must be imported | Lumise importer covers these three first. A live DB export will be needed for testing |
+| 6 | Currency | ZAR only | No multi-currency integration in v1; prices formatted through Woo |
+| 7 | Guest saving | A setting the owner chooses | `Settings › General › Allow guest design saving` (on/off) + retention days |
+| 8 | Print output | PDF with crop marks and bleed | PDF is the primary print file; crop marks on, bleed default 3 mm (per print area) |
+| 9 | Source control | https://github.com/kevbot72-cmd/BluMoon-Product-Design | Pushing needs the Claude GitHub App installed on the repo |
 
 ## 6. Environment note (this cloud session)
 
-This session's network policy **blocks `wordpress.org`** (`api.wordpress.org`, `downloads.wordpress.org`), so wp-env and the WP PHPUnit suite can't download WordPress or WooCommerce here. npm and Packagist work, and Docker is available. To run the integration and E2E tests from Phase 1 on, allow `wordpress.org` and `downloads.wordpress.org` (plus `github.com` if wp-env pulls from it) in the environment's network settings: [docs](https://code.claude.com/docs/en/cloud-environments#network-access). Until then I can build and unit-test everything that doesn't need a running WordPress, and I'll say clearly which tests didn't run.
+`wordpress.org` is reachable as of Phase 1. Docker runs, but Docker Hub may rate-limit pulls; the WP integration suite can also run against a local MariaDB without Docker (see `tests/php/README.md`).

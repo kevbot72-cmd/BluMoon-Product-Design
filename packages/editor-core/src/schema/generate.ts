@@ -5,7 +5,8 @@ import { ProductConfig } from './product-config.ts';
 
 // The JSON Schema files are generated from Zod so client (Zod) and server
 // (opis/json-schema) validate against the same definition.
-const out = new URL('../json/', import.meta.url);
+// Written to the repo-root schema/json/, which ships with the plugin and is read by PHP.
+const out = new URL('../../../../schema/json/', import.meta.url);
 mkdirSync(out, { recursive: true });
 for (const [name, schema] of [
 	['design-document.v1', DesignDocument],

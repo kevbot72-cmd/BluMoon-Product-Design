@@ -1,0 +1,67 @@
+.bps-admin {
+	--bps-accent: #6c4be0;
+	--bps-ok: #1f8a4c;
+	--bps-warn: #b86e00;
+	--bps-bad: #c4312b;
+
+	max-width: 880px;
+}
+
+.bps-admin__title {
+	margin: 0;
+	font-size: 14px;
+}
+
+.bps-checks {
+	margin: 0 0 16px;
+	padding: 0;
+	list-style: none;
+}
+
+.bps-check {
+	display: grid;
+	grid-template-columns: 80px 1fr;
+	gap: 2px 12px;
+	padding: 10px 0;
+	border-bottom: 1px solid #f0f0f0;
+}
+
+.bps-check__badge {
+	grid-row: span 2;
+	align-self: start;
+	padding: 2px 8px;
+	border-radius: 999px;
+	font-size: 12px;
+	font-weight: 600;
+	text-align: center;
+	color: #fff;
+	background: var(--bps-ok);
+}
+
+.bps-check--warning .bps-check__badge {
+	background: var(--bps-warn);
+}
+
+.bps-check--error .bps-check__badge {
+	background: var(--bps-bad);
+}
+
+.bps-check__message {
+	color: #50575e;
+}
+
+.bps-facts {
+	display: grid;
+	grid-template-columns: max-content 1fr;
+	gap: 6px 16px;
+	margin: 0;
+}
+
+.bps-facts dt {
+	color: #50575e;
+}
+
+.bps-facts dd {
+	margin: 0;
+	font-variant-numeric: tabular-nums;
+}

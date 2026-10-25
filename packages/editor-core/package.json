@@ -1,0 +1,12 @@
+{
+	"name": "@bps/editor-core",
+	"private": true,
+	"type": "module",
+	"description": "Design document schema, units and (from Phase 2) the store and commands.",
+	"exports": {
+		".": "./src/index.ts"
+	},
+	"devDependencies": {
+		"zod": "^4.6.7"
+	}
+}

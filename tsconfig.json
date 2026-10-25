@@ -1,0 +1,8 @@
+{
+	"files": [],
+	"references": [
+		{ "path": "./packages/editor-core" },
+		{ "path": "./packages/admin" },
+		{ "path": "./tools" }
+	]
+}

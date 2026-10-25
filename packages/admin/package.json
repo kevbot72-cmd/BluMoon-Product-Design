@@ -1,0 +1,14 @@
+{
+	"name": "@bps/admin",
+	"private": true,
+	"type": "module",
+	"description": "wp-admin React app. @wordpress/* and React resolve to WordPress globals at runtime.",
+	"devDependencies": {
+		"@types/react": "^18.3.31",
+		"@types/react-dom": "^18.3.7",
+		"@wordpress/api-fetch": "^8.0.0",
+		"@wordpress/components": "^43.0.0",
+		"@wordpress/element": "^10.0.0",
+		"@wordpress/i18n": "^7.0.0"
+	}
+}

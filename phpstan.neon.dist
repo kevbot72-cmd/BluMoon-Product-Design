@@ -1,0 +1,11 @@
+parameters:
+	level: 6
+	paths:
+		- blumoon-product-studio.php
+		- uninstall.php
+		- src
+	bootstrapFiles:
+		- tests/php/phpstan-constants.php
+	scanFiles:
+		- vendor/php-stubs/woocommerce-stubs/woocommerce-stubs.php
+	treatPhpDocTypesAsCertain: false

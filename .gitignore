@@ -9,3 +9,10 @@ test-results/
 playwright-report/
 *.log
 .DS_Store
+
+# Container-only Composer override (see tests/php/README.md)
+composer.local.json
+composer.local.lock
+.phpunit.result.cache
+*.tsbuildinfo
+dist/

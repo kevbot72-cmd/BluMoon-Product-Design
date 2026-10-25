@@ -1,0 +1,76 @@
+<?xml version="1.0"?>
+<ruleset name="Blumoon Product Studio">
+	<description>WordPress Coding Standards, adapted for a PSR-4, PHP 8.2 codebase.</description>
+	<file>blumoon-product-studio.php</file>
+	<file>uninstall.php</file>
+	<file>src</file>
+	<file>tests/php</file>
+	<arg name="extensions" value="php"/>
+	<arg name="colors"/>
+	<arg value="sp"/>
+	<config name="testVersion" value="8.2-"/>
+	<config name="minimum_wp_version" value="6.6"/>
+
+	<rule ref="WordPress">
+		<!-- PSR-4: class files are named after the class. -->
+		<exclude name="WordPress.Files.FileName"/>
+		<!-- camelCase methods and properties, as in PSR-12 and WooCommerce's src/. -->
+		<exclude name="WordPress.NamingConventions.ValidFunctionName.MethodNameInvalid"/>
+		<exclude name="WordPress.NamingConventions.ValidVariableName"/>
+		<!-- Short closures and typed signatures make these redundant. -->
+		<exclude name="Universal.Arrays.DisallowShortArraySyntax"/>
+		<exclude name="Generic.Commenting.DocComment.MissingShort"/>
+		<!-- Hook names use the bps/ prefix with slashes (documented in docs/HOOKS.md). -->
+		<exclude name="WordPress.NamingConventions.ValidHookName.UseUnderscores"/>
+		<!-- Docblocks carry PHPStan generics (list<string>, class-string<T>); PHPStan checks them. -->
+		<exclude name="Squiz.Commenting.FunctionComment.IncorrectTypeHint"/>
+		<!-- Exception messages are never rendered as HTML; REST errors go through WP_Error. -->
+		<exclude name="WordPress.Security.EscapeOutput.ExceptionNotEscaped"/>
+	</rule>
+	<rule ref="WordPress.WP.Capabilities">
+		<properties>
+			<property name="custom_capabilities" type="array">
+				<element value="manage_woocommerce"/>
+			</property>
+		</properties>
+	</rule>
+	<rule ref="WordPress.WP.I18n">
+		<properties>
+			<property name="text_domain" type="array">
+				<element value="blumoon-product-studio"/>
+			</property>
+		</properties>
+	</rule>
+	<rule ref="WordPress.NamingConventions.PrefixAllGlobals">
+		<!-- "bps" is the approved prefix (docs/DECISIONS.md); it is short but namespaced code carries the rest. -->
+		<exclude name="WordPress.NamingConventions.PrefixAllGlobals.ShortPrefixPassed"/>
+		<!-- Hooks are named "bps/…" as required by BUILD_PROMPT §15; WPCS only understands underscore prefixes. -->
+		<exclude name="WordPress.NamingConventions.PrefixAllGlobals.NonPrefixedHooknameFound"/>
+		<properties>
+			<property name="prefixes" type="array">
+				<element value="bps_"/>
+				<element value="Blumoon\ProductStudio"/>
+			</property>
+		</properties>
+	</rule>
+	<!-- Tests use PHPUnit naming and fixtures. -->
+	<rule ref="Squiz.Commenting">
+		<exclude-pattern>tests/*</exclude-pattern>
+	</rule>
+	<rule ref="Generic.Commenting">
+		<exclude-pattern>tests/*</exclude-pattern>
+	</rule>
+	<rule ref="WordPress.NamingConventions.PrefixAllGlobals">
+		<exclude-pattern>tests/*</exclude-pattern>
+	</rule>
+	<!-- Test fixtures run outside WordPress: plain filesystem/JSON calls and literal script tags are expected. -->
+	<rule ref="WordPress.WP.AlternativeFunctions">
+		<exclude-pattern>tests/*</exclude-pattern>
+	</rule>
+	<rule ref="WordPress.WP.EnqueuedResources">
+		<exclude-pattern>tests/*</exclude-pattern>
+	</rule>
+	<rule ref="Generic.CodeAnalysis.UnusedFunctionParameter">
+		<exclude-pattern>tests/*</exclude-pattern>
+	</rule>
+</ruleset>

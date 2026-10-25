@@ -1,6 +1,6 @@
 # Blumoon Product Studio — Architecture
 
-Status: **Phase 0 draft, awaiting approval.** Names (`Blumoon Product Studio`, slug `blumoon-product-studio`, prefix `bps`, namespace `Blumoon\ProductStudio`) are placeholders until Q1 is answered.
+Status: **approved 2026-10-25.** Name `Blumoon Product Studio`, slug `blumoon-product-studio`, prefix `bps`, namespace `Blumoon\ProductStudio`, accent `#6C4BE0`.
 
 ## 1. What we are building
 
@@ -191,7 +191,7 @@ Versions checked on npm and Packagist on 2026-10-25. They are pinned at scaffold
 | vite / typescript / vitest / @playwright/test | 8.3.5 / 7.0.2 / 5.0.5 / 1.64.1 | MIT / Apache-2.0 | build and tests |
 | opis/json-schema | 2.6.0 | Apache-2.0 | server-side validation |
 | enshrined/svg-sanitize | 1.1.1 | GPL-2.0+ | SVG sanitising |
-| tecnickcom/tcpdf | 6.11.x (PHP 8.1) or 7.0.x (PHP ≥ 8.2) | LGPL-3.0 | PDF assembly (see Q9) |
+| tecnickcom/tcpdf | 7.0.x | LGPL-3.0 | PDF assembly |
 | phpstan 2.3 + phpstan-wordpress 2.0 + woocommerce-stubs 11.2, WPCS 3.4, PHPUnit + yoast/phpunit-polyfills 4.0 | — | MIT / BSD | QA |
 
 Draco/KTX2/Basis decoders ship from the `three` package (MIT/Apache-2.0). There is no Google Fonts CDN at runtime: fonts are downloaded server-side and self-hosted.
