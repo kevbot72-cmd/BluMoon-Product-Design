@@ -10,9 +10,11 @@ declare(strict_types=1);
 namespace Blumoon\ProductStudio;
 
 use Blumoon\ProductStudio\Admin\AdminProvider;
+use Blumoon\ProductStudio\Domain\DomainProvider;
 use Blumoon\ProductStudio\Infrastructure\InfrastructureProvider;
 use Blumoon\ProductStudio\Rest\RestProvider;
 use Blumoon\ProductStudio\Woo\Compat;
+use Blumoon\ProductStudio\Woo\WooProvider;
 
 /**
  * Wires providers together once WordPress and WooCommerce have loaded.
@@ -43,8 +45,10 @@ final class Plugin {
 	private function __construct( private readonly Container $container ) {
 		$this->providers = array(
 			new InfrastructureProvider(),
+			new DomainProvider(),
 			new RestProvider(),
 			new AdminProvider(),
+			new WooProvider(),
 		);
 	}
 

@@ -8,4 +8,5 @@ parameters:
 		- tests/php/phpstan-constants.php
 	scanFiles:
 		- vendor/php-stubs/woocommerce-stubs/woocommerce-stubs.php
+		- tests/php/stubs/wp-cli.php
 	treatPhpDocTypesAsCertain: false

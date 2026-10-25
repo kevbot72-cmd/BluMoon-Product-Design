@@ -51,11 +51,13 @@ jobs:
     name: PHP integration — WordPress ${{ matrix.wp }} + WooCommerce, HPOS ${{ matrix.hpos }}
     runs-on: ubuntu-latest
     strategy:
+      fail-fast: false
       matrix:
         include:
           - { wp: latest, wc: latest-stable, php: '8.4', hpos: 'on' }
           - { wp: latest, wc: latest-stable, php: '8.4', hpos: 'off' }
-          - { wp: '6.6', wc: '9.0.2', php: '8.2', hpos: 'on' }
+          # Minimum supported versions; the WordPress test library must match core.
+          - { wp: '6.6', wc: '9.0.2', php: '8.2', hpos: 'on', tests_lib: '~6.6.0' }
     services:
       mysql:
         image: mariadb:lts
@@ -75,6 +77,8 @@ jobs:
           extensions: mysqli, imagick
           coverage: none
       - run: composer install --no-interaction --no-progress
+      - if: matrix.tests_lib
+        run: composer require --dev --no-interaction --no-progress -W "wp-phpunit/wp-phpunit:${{ matrix.tests_lib }}"
       - run: tests/php/bin/install-wp.sh /tmp/wp ${{ matrix.wp }} ${{ matrix.wc }}
       - run: composer test:integration
         env:

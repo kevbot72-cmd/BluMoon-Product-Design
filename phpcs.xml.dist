@@ -5,6 +5,7 @@
 	<file>uninstall.php</file>
 	<file>src</file>
 	<file>tests/php</file>
+	<exclude-pattern>tests/php/stubs/*</exclude-pattern>
 	<arg name="extensions" value="php"/>
 	<arg name="colors"/>
 	<arg value="sp"/>

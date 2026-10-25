@@ -10,6 +10,7 @@ declare(strict_types=1);
 namespace Blumoon\ProductStudio\Rest;
 
 use Blumoon\ProductStudio\Container;
+use Blumoon\ProductStudio\Domain\Editor\EditorBootstrap;
 use Blumoon\ProductStudio\Infrastructure\Settings;
 use Blumoon\ProductStudio\Infrastructure\Storage;
 use Blumoon\ProductStudio\Migration\Tables;
@@ -27,6 +28,7 @@ final class RestProvider implements ServiceProvider {
 	 */
 	private const CONTROLLERS = array(
 		HealthController::class,
+		EditorController::class,
 	);
 
 	/**
@@ -35,6 +37,7 @@ final class RestProvider implements ServiceProvider {
 	 * @param Container $container Service container.
 	 */
 	public function register( Container $container ): void {
+		$container->set( EditorController::class, static fn ( Container $c ): EditorController => new EditorController( $c->get( EditorBootstrap::class ) ) );
 		$container->set(
 			HealthController::class,
 			static fn ( Container $c ): HealthController => new HealthController(

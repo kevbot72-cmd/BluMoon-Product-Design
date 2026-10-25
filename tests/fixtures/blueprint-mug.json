@@ -1,0 +1,40 @@
+{
+	"schemaVersion": 1,
+	"sides": [
+		{
+			"id": "right",
+			"label": "Right",
+			"base": { "attachmentId": 1, "widthPx": 1600, "heightPx": 1000 },
+			"printAreas": [
+				{
+					"id": "pa1",
+					"label": "Wrap",
+					"shape": "rect",
+					"rect": { "x": 0.25, "y": 0.2, "w": 0.5, "h": 0.55 },
+					"sizeMm": { "w": 200, "h": 137.5 },
+					"bleedMm": 2,
+					"safeMm": 4,
+					"dpi": 300,
+					"clip": true
+				}
+			]
+		},
+		{
+			"id": "left",
+			"label": "Left",
+			"base": { "attachmentId": 1, "widthPx": 1600, "heightPx": 1000 },
+			"printAreas": [
+				{
+					"id": "pa1",
+					"rect": { "x": 0.25, "y": 0.2, "w": 0.5, "h": 0.55 },
+					"sizeMm": { "w": 200, "h": 137.5 }
+				}
+			]
+		}
+	],
+	"colors": [
+		{ "id": "white", "name": "White", "hex": "#ffffff" },
+		{ "id": "black", "name": "Black", "hex": "#1a1a1a" }
+	],
+	"defaultColor": "white"
+}
