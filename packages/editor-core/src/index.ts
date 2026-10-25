@@ -1,3 +1,11 @@
 export * from './units.ts';
-export { DesignDocument, Element } from './schema/design-document.ts';
-export { ProductConfig, SideDefinition } from './schema/product-config.ts';
+export * from './geometry.ts';
+export * from './elements.ts';
+export * from './commands.ts';
+export * from './document.ts';
+export * from './store.ts';
+export * from './session.ts';
+export * from './events.ts';
+export { newId } from './ids.ts';
+export * from './schema/design-document.ts';
+export * from './schema/product-config.ts';

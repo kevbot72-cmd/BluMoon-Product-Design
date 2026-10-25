@@ -109,9 +109,21 @@ export const ImageElement = ElementBase.extend({
 	keepAspect: z.boolean().default(false),
 });
 
-/** SVG shape or clipart. `colors` maps an original fill/stroke colour to its replacement. */
-export const VectorElement = ElementBase.extend({
-	type: z.enum(['shape', 'clipart']),
+export const SHAPES = ['rect', 'ellipse', 'triangle', 'star', 'heart', 'hexagon', 'line', 'arrow'] as const;
+
+/** Built-in vector shape, drawn to fill its box. */
+export const ShapeElement = ElementBase.extend({
+	type: z.literal('shape'),
+	shape: z.enum(SHAPES),
+	fill: Color.nullable(),
+	stroke: z.object({ color: Color, widthMm: z.number().min(0).max(100) }).nullable().default(null),
+	cornerRadiusMm: z.number().min(0).max(1000).default(0),
+	keepAspect: z.boolean().default(false),
+});
+
+/** Clipart from the store's library (SVG or PNG attachment). `colors` maps an original SVG colour to its replacement. */
+export const ClipartElement = ElementBase.extend({
+	type: z.literal('clipart'),
 	attachmentId: z.number().int().positive(),
 	colors: z.record(Color, Color).default({}),
 	keepAspect: z.boolean().default(true),
@@ -168,7 +180,7 @@ export const PlaceholderElement = ElementBase.extend({
 	hint: z.string().max(120).optional(),
 });
 
-const LeafElement = z.discriminatedUnion('type', [TextElement, ImageElement, VectorElement, QrElement, DrawingElement, PlaceholderElement]);
+const LeafElement = z.discriminatedUnion('type', [TextElement, ImageElement, ShapeElement, ClipartElement, QrElement, DrawingElement, PlaceholderElement]);
 
 /** Group: children positions are relative to the print area, like top-level elements. */
 export const GroupElement = ElementBase.extend({
@@ -176,7 +188,7 @@ export const GroupElement = ElementBase.extend({
 	children: z.array(LeafElement).min(2).max(200),
 });
 
-export const Element = z.discriminatedUnion('type', [TextElement, ImageElement, VectorElement, QrElement, DrawingElement, PlaceholderElement, GroupElement]);
+export const Element = z.discriminatedUnion('type', [TextElement, ImageElement, ShapeElement, ClipartElement, QrElement, DrawingElement, PlaceholderElement, GroupElement]);
 
 export const DesignDocument = z.object({
 	schemaVersion: z.literal(1),
@@ -208,3 +220,15 @@ export const DesignDocument = z.object({
 
 export type DesignDocument = z.infer<typeof DesignDocument>;
 export type Element = z.infer<typeof Element>;
+export type ElementType = Element['type'];
+export type TextElement = z.infer<typeof TextElement>;
+export type ImageElement = z.infer<typeof ImageElement>;
+export type ShapeElement = z.infer<typeof ShapeElement>;
+export type ClipartElement = z.infer<typeof ClipartElement>;
+export type QrElement = z.infer<typeof QrElement>;
+export type DrawingElement = z.infer<typeof DrawingElement>;
+export type PlaceholderElement = z.infer<typeof PlaceholderElement>;
+export type GroupElement = z.infer<typeof GroupElement>;
+export type TextEffect = z.infer<typeof TextEffect>;
+export type QrPayload = z.infer<typeof QrPayload>;
+export type ImageSource = z.infer<typeof ImageSource>;

@@ -2,7 +2,7 @@ import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import { z } from 'zod';
 import { DesignDocument } from './design-document.ts';
-import { ProductConfig } from './product-config.ts';
+import { Blueprint, ProductConfig } from './product-config.ts';
 
 type ElementsFixture = { sides: { front: { printAreas: { pa1: { elements: Record<string, unknown>[] } } } } };
 
@@ -41,6 +41,7 @@ describe('generated JSON Schema', () => {
 	it.each([
 		['design-document.v1', DesignDocument],
 		['product-config.v1', ProductConfig],
+		['blueprint.v1', Blueprint],
 	] as const)('%s.json matches the Zod definition (run `npm run schema` if stale)', (name, schema) => {
 		const committed: unknown = JSON.parse(readFileSync(new URL(`../../../../schema/json/${name}.json`, import.meta.url), 'utf8'));
 		expect(committed).toEqual(z.toJSONSchema(schema, { target: 'draft-2020-12', io: 'input', reused: 'ref' }));

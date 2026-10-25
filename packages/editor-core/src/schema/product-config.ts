@@ -44,6 +44,19 @@ export const SideDefinition = z.object({
 	printAreas: z.array(PrintArea).min(1).max(8),
 });
 
+/** Template-mode product definition (CPT bps_blueprint). */
+export const Blueprint = z.object({
+	schemaVersion: z.literal(1),
+	sides: z.array(SideDefinition.extend({ base: ImageRef })).min(1).max(12),
+	colors: z
+		.array(z.object({ id: Id, name: z.string().min(1).max(60), hex: Color, attributeTerm: z.string().max(200).nullable().default(null) }))
+		.max(60)
+		.default([]),
+	defaultColor: Id.nullable().default(null),
+	starterTemplateId: z.number().int().positive().nullable().default(null),
+	allowedTemplateIds: z.array(z.number().int().positive()).max(500).default([]),
+});
+
 export const GalleryConfig = z.object({
 	source: z.enum(['first_gallery_image', 'featured_image', 'variation_image', 'attachment']).default('first_gallery_image'),
 	attachmentId: z.number().int().positive().nullable().default(null),
@@ -119,3 +132,6 @@ export const ProductConfig = z.object({
 
 export type ProductConfig = z.infer<typeof ProductConfig>;
 export type SideDefinition = z.infer<typeof SideDefinition>;
+export type PrintArea = z.infer<typeof PrintArea>;
+export type Blueprint = z.infer<typeof Blueprint>;
+export type ImageRef = z.infer<typeof ImageRef>;

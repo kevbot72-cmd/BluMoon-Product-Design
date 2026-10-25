@@ -1,0 +1,380 @@
+{
+	"$schema": "https://json-schema.org/draft/2020-12/schema",
+	"type": "object",
+	"properties": {
+		"schemaVersion": {
+			"type": "number",
+			"const": 1
+		},
+		"sides": {
+			"minItems": 1,
+			"maxItems": 12,
+			"type": "array",
+			"items": {
+				"$ref": "#/$defs/__schema0"
+			}
+		},
+		"colors": {
+			"default": [],
+			"maxItems": 60,
+			"type": "array",
+			"items": {
+				"$ref": "#/$defs/__schema8"
+			}
+		},
+		"defaultColor": {
+			"default": null,
+			"anyOf": [
+				{
+					"$ref": "#/$defs/__schema1"
+				},
+				{
+					"type": "null"
+				}
+			]
+		},
+		"starterTemplateId": {
+			"default": null,
+			"anyOf": [
+				{
+					"type": "integer",
+					"exclusiveMinimum": 0,
+					"maximum": 9007199254740991
+				},
+				{
+					"type": "null"
+				}
+			]
+		},
+		"allowedTemplateIds": {
+			"default": [],
+			"maxItems": 500,
+			"type": "array",
+			"items": {
+				"$ref": "#/$defs/__schema9"
+			}
+		}
+	},
+	"required": [
+		"schemaVersion",
+		"sides"
+	],
+	"$defs": {
+		"__schema0": {
+			"type": "object",
+			"properties": {
+				"id": {
+					"$ref": "#/$defs/__schema1"
+				},
+				"label": {
+					"type": "string",
+					"maxLength": 60
+				},
+				"base": {
+					"$ref": "#/$defs/__schema2"
+				},
+				"overlay": {
+					"default": null,
+					"anyOf": [
+						{
+							"type": "object",
+							"properties": {
+								"attachmentId": {
+									"$ref": "#/$defs/__schema3"
+								},
+								"widthPx": {
+									"$ref": "#/$defs/__schema4"
+								},
+								"heightPx": {
+									"$ref": "#/$defs/__schema5"
+								},
+								"blend": {
+									"default": "multiply",
+									"type": "string",
+									"enum": [
+										"multiply",
+										"screen",
+										"normal"
+									]
+								}
+							},
+							"required": [
+								"attachmentId",
+								"widthPx",
+								"heightPx"
+							]
+						},
+						{
+							"type": "null"
+						}
+					]
+				},
+				"mask": {
+					"default": null,
+					"anyOf": [
+						{
+							"$ref": "#/$defs/__schema2"
+						},
+						{
+							"type": "null"
+						}
+					]
+				},
+				"printAreas": {
+					"minItems": 1,
+					"maxItems": 8,
+					"type": "array",
+					"items": {
+						"$ref": "#/$defs/__schema6"
+					}
+				}
+			},
+			"required": [
+				"id",
+				"label",
+				"base",
+				"printAreas"
+			]
+		},
+		"__schema1": {
+			"type": "string",
+			"pattern": "^[A-Za-z0-9_-]{1,64}$"
+		},
+		"__schema2": {
+			"type": "object",
+			"properties": {
+				"attachmentId": {
+					"$ref": "#/$defs/__schema3"
+				},
+				"widthPx": {
+					"$ref": "#/$defs/__schema4"
+				},
+				"heightPx": {
+					"$ref": "#/$defs/__schema5"
+				}
+			},
+			"required": [
+				"attachmentId",
+				"widthPx",
+				"heightPx"
+			]
+		},
+		"__schema3": {
+			"type": "integer",
+			"exclusiveMinimum": 0,
+			"maximum": 9007199254740991
+		},
+		"__schema4": {
+			"type": "integer",
+			"exclusiveMinimum": 0,
+			"maximum": 9007199254740991
+		},
+		"__schema5": {
+			"type": "integer",
+			"exclusiveMinimum": 0,
+			"maximum": 9007199254740991
+		},
+		"__schema6": {
+			"type": "object",
+			"properties": {
+				"id": {
+					"$ref": "#/$defs/__schema1"
+				},
+				"label": {
+					"default": "",
+					"type": "string",
+					"maxLength": 60
+				},
+				"shape": {
+					"default": "rect",
+					"type": "string",
+					"enum": [
+						"rect",
+						"roundedRect",
+						"ellipse",
+						"path"
+					]
+				},
+				"cornerRadiusMm": {
+					"default": 0,
+					"type": "number",
+					"minimum": 0
+				},
+				"pathD": {
+					"default": null,
+					"anyOf": [
+						{
+							"type": "string",
+							"maxLength": 20000
+						},
+						{
+							"type": "null"
+						}
+					]
+				},
+				"rect": {
+					"type": "object",
+					"properties": {
+						"x": {
+							"type": "number",
+							"minimum": 0,
+							"maximum": 1
+						},
+						"y": {
+							"type": "number",
+							"minimum": 0,
+							"maximum": 1
+						},
+						"w": {
+							"type": "number",
+							"exclusiveMinimum": 0,
+							"maximum": 1
+						},
+						"h": {
+							"type": "number",
+							"exclusiveMinimum": 0,
+							"maximum": 1
+						}
+					},
+					"required": [
+						"x",
+						"y",
+						"w",
+						"h"
+					]
+				},
+				"quad": {
+					"default": null,
+					"anyOf": [
+						{
+							"type": "array",
+							"prefixItems": [
+								{
+									"$ref": "#/$defs/__schema7"
+								},
+								{
+									"$ref": "#/$defs/__schema7"
+								},
+								{
+									"$ref": "#/$defs/__schema7"
+								},
+								{
+									"$ref": "#/$defs/__schema7"
+								}
+							],
+							"items": false,
+							"minItems": 4,
+							"maxItems": 4
+						},
+						{
+							"type": "null"
+						}
+					]
+				},
+				"sizeMm": {
+					"type": "object",
+					"properties": {
+						"w": {
+							"type": "number",
+							"exclusiveMinimum": 0,
+							"maximum": 10000
+						},
+						"h": {
+							"type": "number",
+							"exclusiveMinimum": 0,
+							"maximum": 10000
+						}
+					},
+					"required": [
+						"w",
+						"h"
+					]
+				},
+				"bleedMm": {
+					"default": 3,
+					"type": "number",
+					"minimum": 0,
+					"maximum": 50
+				},
+				"safeMm": {
+					"default": 5,
+					"type": "number",
+					"minimum": 0,
+					"maximum": 100
+				},
+				"dpi": {
+					"default": 300,
+					"type": "integer",
+					"minimum": 72,
+					"maximum": 1200
+				},
+				"clip": {
+					"default": true,
+					"type": "boolean"
+				}
+			},
+			"required": [
+				"id",
+				"rect",
+				"sizeMm"
+			]
+		},
+		"__schema7": {
+			"type": "array",
+			"prefixItems": [
+				{
+					"type": "number",
+					"minimum": 0,
+					"maximum": 1
+				},
+				{
+					"type": "number",
+					"minimum": 0,
+					"maximum": 1
+				}
+			],
+			"items": false,
+			"minItems": 2,
+			"maxItems": 2
+		},
+		"__schema8": {
+			"type": "object",
+			"properties": {
+				"id": {
+					"$ref": "#/$defs/__schema1"
+				},
+				"name": {
+					"type": "string",
+					"minLength": 1,
+					"maxLength": 60
+				},
+				"hex": {
+					"type": "string",
+					"pattern": "^#(?:[0-9a-fA-F]{3}|[0-9a-fA-F]{6}|[0-9a-fA-F]{8})$"
+				},
+				"attributeTerm": {
+					"default": null,
+					"anyOf": [
+						{
+							"type": "string",
+							"maxLength": 200
+						},
+						{
+							"type": "null"
+						}
+					]
+				}
+			},
+			"required": [
+				"id",
+				"name",
+				"hex"
+			]
+		},
+		"__schema9": {
+			"type": "integer",
+			"exclusiveMinimum": 0,
+			"maximum": 9007199254740991
+		}
+	}
+}

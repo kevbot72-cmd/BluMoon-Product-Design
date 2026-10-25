@@ -8,5 +8,8 @@
 	},
 	"devDependencies": {
 		"zod": "^4.6.7"
+	},
+	"dependencies": {
+		"immer": "^11.2.9"
 	}
 }

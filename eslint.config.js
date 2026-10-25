@@ -14,6 +14,8 @@ export default tseslint.config(
 		},
 		rules: {
 			'@typescript-eslint/restrict-template-expressions': ['error', { allowNumber: true }],
+			// noUncheckedIndexedAccess already forces every index access to be acknowledged; `!` is that acknowledgement.
+			'@typescript-eslint/no-non-null-assertion': 'off',
 		},
 	},
 	{
@@ -24,10 +26,5 @@ export default tseslint.config(
 	{
 		files: ['tools/**', '*.config.{js,ts}', 'tests/**', '**/*.test.ts'],
 		languageOptions: { globals: { ...globals.node } },
-	},
-	{
-		// Tests index into fixtures they define; the non-null assertions are deliberate.
-		files: ['**/*.test.ts'],
-		rules: { '@typescript-eslint/no-non-null-assertion': 'off' },
 	},
 );
