@@ -525,6 +525,15 @@
 	transform: translateX(-50%);
 }
 
+.bps-cropbar {
+	top: 12px;
+	left: 50%;
+	flex-wrap: wrap;
+	gap: 6px;
+	justify-content: center;
+	max-width: calc(100% - 24px);
+}
+
 .bps-ctx__btn {
 	display: inline-flex;
 	gap: 6px;

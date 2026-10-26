@@ -21,6 +21,13 @@ export function bindShortcuts(model: EditorModel): () => void {
 		const mod = event.ctrlKey || event.metaKey;
 		const key = event.key.toLowerCase();
 		let handled = true;
+		// Cropping is modal: Enter applies, Esc cancels, zoom keys still work, everything else waits.
+		if (model.cropping.value && !(!mod && ['+', '=', '-', '0'].includes(key))) {
+			if (key === 'enter') model.applyCrop();
+			else if (key === 'escape') model.cancelCrop();
+			event.preventDefault();
+			return;
+		}
 		if (mod && key === 'z' && !event.shiftKey) model.undo();
 		else if (mod && ((key === 'z' && event.shiftKey) || key === 'y')) model.redo();
 		else if (mod && key === 'c') model.copy();

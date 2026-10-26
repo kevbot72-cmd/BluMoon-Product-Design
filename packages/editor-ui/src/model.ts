@@ -89,6 +89,8 @@ export class EditorModel {
 	readonly restoreOffer = signal<Saved | null>(null);
 	readonly textEditRequest = signal<string | null>(null);
 	readonly shortcutsOpen = signal(false);
+	/** The image being cropped and its locked ratio (width ÷ height in mm). */
+	readonly cropping = signal<{ id: string; ratio: number | null } | null>(null);
 
 	readonly #uploadUrls = new Map<string, string>();
 	readonly #clipartById = new Map<number, Clipart>();
@@ -146,6 +148,10 @@ export class EditorModel {
 		});
 		stage.events.on('text:edit', ({ id }) => {
 			this.textEditRequest.value = id;
+		});
+		stage.events.on('crop:changed', ({ id, ratio }) => {
+			this.cropping.value = id ? { id, ratio } : null;
+			if (id) this.announce(__('Cropping. Drag the handles, then press Enter to apply or Esc to cancel.', 'blumoon-product-studio'));
 		});
 		stage.events.on('snap', () => {
 			// Not in Safari, whatever the DOM types say.
@@ -428,6 +434,23 @@ export class EditorModel {
 			this.session.select(pasted.map((el) => el.id));
 		});
 		this.#clipboard = pasted;
+	}
+
+	/* ------------------------------------------------------------ Crop */
+
+	async startCrop(id: string = this.selection.value[0] ?? ''): Promise<void> {
+		if (this.drawing.value.enabled) this.setDrawing({ enabled: false });
+		if (!(await this.stage?.startCrop(id))) {
+			this.toast({ message: __('This photo can’t be cropped.', 'blumoon-product-studio'), tone: 'error' });
+		}
+	}
+
+	applyCrop(): void {
+		this.stage?.applyCrop();
+	}
+
+	cancelCrop(): void {
+		this.stage?.cancelCrop();
 	}
 
 	undo(): void {

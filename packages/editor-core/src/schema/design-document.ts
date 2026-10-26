@@ -78,8 +78,9 @@ export const TextElement = ElementBase.extend({
 	effect: TextEffect.default({ kind: 'none' }),
 });
 
+/** Adjustments, -1..1 (blur and sharpen use 0..1). Temperature: negative is cooler, positive warmer. */
 export const ImageFilter = z.discriminatedUnion('name', [
-	z.object({ name: z.enum(['brightness', 'contrast', 'saturation', 'hue', 'blur', 'sharpen']), value: z.number().min(-1).max(1) }),
+	z.object({ name: z.enum(['brightness', 'contrast', 'saturation', 'hue', 'temperature', 'blur', 'sharpen']), value: z.number().min(-1).max(1) }),
 	z.object({ name: z.enum(['grayscale', 'sepia', 'invert']) }),
 	z.object({ name: z.literal('duotone'), dark: Color, light: Color }),
 ]);
@@ -232,3 +233,5 @@ export type GroupElement = z.infer<typeof GroupElement>;
 export type TextEffect = z.infer<typeof TextEffect>;
 export type QrPayload = z.infer<typeof QrPayload>;
 export type ImageSource = z.infer<typeof ImageSource>;
+export type ImageFilter = z.infer<typeof ImageFilter>;
+export type Mask = z.infer<typeof Mask>;

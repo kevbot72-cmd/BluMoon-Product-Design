@@ -2,7 +2,14 @@ import { ActiveSelection, Canvas, Ellipse, FabricImage, FabricObject, IText, Pat
 import {
 	addElement,
 	areaElements,
+	clampCrop,
 	createDrawing,
+	cropImage,
+	cropOfBox,
+	fitCropToRatio,
+	imageFrame,
+	isMovable,
+	placeCrop,
 	Emitter,
 	newId,
 	transformElements,
@@ -12,6 +19,9 @@ import {
 	type EditorSession,
 	type Element,
 	type ElementTransform,
+	type ImageElement,
+	type ImageFrame,
+	type NormCrop,
 	type SideLayout,
 	type TextElement,
 	type TextMeasurer,
@@ -20,7 +30,7 @@ import type { FontRegistry } from './fonts.ts';
 import type { ImageCache } from './images.ts';
 import { snap, snapTargets, type Bounds } from './snapping.ts';
 import { Viewport } from './viewport.ts';
-import { buildObject, svgColors, textObject, viewMeta, type AssetResolver, type ViewContext } from './views.ts';
+import { buildObject, imageUrl, svgColors, textObject, viewMeta, type AssetResolver, type ViewContext } from './views.ts';
 
 export interface SideImage {
 	url: string;
@@ -44,6 +54,21 @@ export interface StageEvents extends Record<string, unknown> {
 	'text:edit': { id: string };
 	/** A drag snapped to a guide (for haptics). */
 	snap: Record<string, never>;
+	/** Crop mode started (id), changed ratio, or ended (null). */
+	'crop:changed': { id: string | null; ratio: number | null };
+}
+
+/** An image being cropped: the whole photo dimmed, the kept part bright, and the crop box. */
+interface CropSession {
+	id: string;
+	frame: ImageFrame;
+	ratio: number | null;
+	dim: FabricImage;
+	bright: FabricImage;
+	clip: Rect;
+	box: Rect;
+	/** Objects that were clickable before cropping. */
+	evented: Map<FabricObject, boolean>;
 }
 
 export interface StageOptions {
@@ -94,6 +119,7 @@ export class Stage {
 	#spaceDown = false;
 	#panFrom: { x: number; y: number } | null = null;
 	#drawing: DrawingOptions = { enabled: false, color: '#1a1a1a', widthMm: 1, erase: false };
+	#crop: CropSession | null = null;
 	readonly #unsubscribe: (() => void)[] = [];
 	showGuides = true;
 
@@ -221,11 +247,165 @@ export class Stage {
 		}
 		const b = obj.getBoundingRect();
 		const multiplier = sizePx / Math.max(b.width, b.height, 1);
-		const clip = obj.clipPath;
-		obj.clipPath = undefined;
+		const holder = clipHolder(obj);
+		const clip = holder.clipPath;
+		holder.clipPath = undefined;
 		const url = obj.toDataURL({ multiplier, format: 'png' });
-		obj.clipPath = clip;
+		holder.clipPath = clip;
 		return url;
+	}
+
+	/* ------------------------------------------------------------ Crop */
+
+	/** The image being cropped, if any. */
+	get cropping(): string | null {
+		return this.#crop?.id ?? null;
+	}
+
+	/**
+	 * Crop an image in place: the crop box has 8 handles that resize from the
+	 * opposite edge (Alt: from the centre) and stays inside the photo.
+	 */
+	async startCrop(id: string): Promise<boolean> {
+		const el = this.#built.get(id);
+		const obj = this.#objects.get(id);
+		if (this.#crop || el?.type !== 'image' || !obj || !isMovable(el)) {
+			return false;
+		}
+		const url = imageUrl(el, this.#opts.assets);
+		const img = url ? await this.#opts.images.load(url).catch(() => null) : null;
+		if (!img || this.#crop) {
+			return false;
+		}
+		const area = this.area;
+		const frame = imageFrame(el);
+		const full = (opacity: number): FabricImage =>
+			new FabricImage(img, {
+				originX: 'center',
+				originY: 'center',
+				left: area.x + frame.cx,
+				top: area.y + frame.cy,
+				angle: frame.rotation,
+				flipX: frame.flipX,
+				flipY: frame.flipY,
+				scaleX: frame.w / img.naturalWidth,
+				scaleY: frame.h / img.naturalHeight,
+				opacity,
+				selectable: false,
+				evented: false,
+				objectCaching: false,
+			});
+		const boxProps = { originX: 'center' as const, originY: 'center' as const, angle: frame.rotation, strokeWidth: 0 };
+		const clip = new Rect({ ...boxProps, absolutePositioned: true });
+		const bright = full(el.opacity);
+		bright.clipPath = clip;
+		const box = new Rect({ ...boxProps, fill: 'rgba(0,0,0,0)', lockRotation: true, lockScalingFlip: true, hoverCursor: 'move' });
+		this.#style(box, { ...area, clip: false });
+		box.setControlsVisibility({ mtr: false });
+
+		const evented = new Map<FabricObject, boolean>();
+		for (const o of this.#objects.values()) {
+			evented.set(o, o.evented);
+			o.evented = false;
+		}
+		// Set first, so the canvas selection changes below don't reach the session.
+		this.#crop = { id, frame, ratio: null, dim: full(0.35), bright, clip, box, evented };
+		this.#canvas.discardActiveObject();
+		obj.visible = false;
+		this.#canvas.selection = false;
+		this.#canvas.add(this.#crop.dim, bright, box);
+		this.#setCropBox(el.crop);
+		this.#setCropRatioControls();
+		this.#canvas.setActiveObject(box);
+		this.#canvas.requestRenderAll();
+		this.#emitSelectionBox();
+		this.events.emit('crop:changed', { id, ratio: null });
+		return true;
+	}
+
+	/** Lock the crop to a width ÷ height ratio in mm (null: free). */
+	setCropRatio(ratio: number | null): void {
+		const crop = this.#crop;
+		if (!crop) return;
+		crop.ratio = ratio;
+		if (ratio) {
+			this.#setCropBox(fitCropToRatio(this.#cropOfBox(), crop.frame, ratio));
+		}
+		this.#setCropRatioControls();
+		this.#canvas.requestRenderAll();
+		this.events.emit('crop:changed', { id: crop.id, ratio });
+	}
+
+	/** Show the whole photo again (the ratio, if any, still applies). */
+	resetCrop(): void {
+		const crop = this.#crop;
+		if (!crop) return;
+		const all = { x: 0, y: 0, w: 1, h: 1 };
+		this.#setCropBox(crop.ratio ? fitCropToRatio(all, crop.frame, crop.ratio) : all);
+		this.#canvas.requestRenderAll();
+	}
+
+	applyCrop(): void {
+		const crop = this.#crop;
+		if (!crop) return;
+		const next = clampCrop(this.#cropOfBox(), 'resize');
+		this.#endCrop();
+		this.#opts.session.dispatch(cropImage({ ...this.#opts.session.active, id: crop.id }, next));
+	}
+
+	cancelCrop(): void {
+		this.#endCrop();
+	}
+
+	#cropOfBox(): NormCrop {
+		const crop = this.#crop!;
+		const area = this.area;
+		const centre = crop.box.getCenterPoint();
+		return cropOfBox(crop.frame, { cx: centre.x - area.x, cy: centre.y - area.y, w: crop.box.width * crop.box.scaleX, h: crop.box.height * crop.box.scaleY });
+	}
+
+	#setCropBox(next: NormCrop): void {
+		const crop = this.#crop!;
+		const area = this.area;
+		const p = placeCrop(crop.frame, next);
+		const props = { left: area.x + p.x + p.w / 2, top: area.y + p.y + p.h / 2, width: p.w, height: p.h, scaleX: 1, scaleY: 1 };
+		crop.box.set(props);
+		crop.box.setCoords();
+		crop.clip.set(props);
+		crop.bright.dirty = true;
+	}
+
+	/** Corner handles only (and proportional scaling) while a ratio is locked. */
+	#setCropRatioControls(): void {
+		const crop = this.#crop!;
+		const free = crop.ratio === null;
+		crop.box.setControlsVisibility({ ml: free, mr: free, mt: free, mb: free });
+		this.#canvas.uniformScaling = !free;
+	}
+
+	#cropGesture(mode: 'move' | 'resize'): void {
+		const crop = this.#crop!;
+		this.#setCropBox(clampCrop(this.#cropOfBox(), mode, crop.frame, crop.ratio));
+	}
+
+	#endCrop(): void {
+		const crop = this.#crop;
+		if (!crop) return;
+		this.#crop = null;
+		this.#canvas.remove(crop.dim, crop.bright, crop.box);
+		for (const [o, was] of crop.evented) {
+			o.evented = was;
+		}
+		const obj = this.#objects.get(crop.id);
+		const el = this.#built.get(crop.id);
+		if (obj && el) {
+			obj.visible = !el.hidden;
+		}
+		this.#canvas.selection = true;
+		this.#updateScalingMode();
+		this.#applySelection(this.#opts.session.selection);
+		this.#emitSelectionBox();
+		this.events.emit('crop:changed', { id: null, ratio: null });
 	}
 
 	destroy(): void {
@@ -297,6 +477,10 @@ export class Stage {
 	async #sync(): Promise<void> {
 		const area = this.area;
 		const elements = areaElements(this.#opts.session.doc, this.#opts.session.active);
+		// Undo, redo or a panel changed the image being cropped: crop from scratch.
+		if (this.#crop && elements.find((el) => el.id === this.#crop?.id) !== this.#built.get(this.#crop.id)) {
+			this.#endCrop();
+		}
 		const present = new Set(elements.map((el) => el.id));
 		for (const [id, obj] of this.#objects) {
 			if (!present.has(id)) {
@@ -358,7 +542,8 @@ export class Stage {
 			padding: 0,
 		});
 		if (area.clip) {
-			obj.clipPath = clipShape(area);
+			// A masked photo already has a clip path: the print area clips the mask.
+			clipHolder(obj).clipPath = clipShape(area);
 		}
 		if (obj instanceof IText) {
 			obj.set({ cursorWidth: 1.5 / this.viewport.scale, cursorColor: this.#opts.accent, editingBorderColor: this.#opts.accent });
@@ -374,10 +559,14 @@ export class Stage {
 				void this.#queueSync();
 			}),
 			session.events.on('side:changed', () => {
+				this.#endCrop();
 				void this.#loadSide();
 			}),
 			session.events.on('selection:changed', ({ ids }) => {
-				if (!this.#selectingFromCanvas) {
+				if (this.#crop && (ids.length !== 1 || ids[0] !== this.#crop.id)) {
+					this.#endCrop();
+				}
+				if (!this.#selectingFromCanvas && !this.#crop) {
 					this.#applySelection(ids);
 				}
 				this.#updateScalingMode();
@@ -401,6 +590,7 @@ export class Stage {
 
 	/** Free aspect for images and shapes (owner's add-on); proportional for everything else. Shift flips it. */
 	#updateScalingMode(): void {
+		if (this.#crop) return;
 		const objs = this.#canvas.getActiveObjects();
 		const first = objs[0] ? this.#built.get(viewMeta(objs[0])?.id ?? '') : undefined;
 		const free = objs.length === 1 && first !== undefined && (first.type === 'image' || first.type === 'shape') && !first.keepAspect;
@@ -412,7 +602,7 @@ export class Stage {
 	#bindCanvas(): void {
 		const c = this.#canvas;
 		const syncSelection = (): void => {
-			if (this.#selectingFromSession || this.#rebuilding) {
+			if (this.#selectingFromSession || this.#rebuilding || this.#crop) {
 				return;
 			}
 			this.#selectingFromCanvas = true;
@@ -424,11 +614,19 @@ export class Stage {
 		c.on('selection:cleared', syncSelection);
 
 		c.on('object:moving', (e) => {
+			if (this.#crop?.box === e.target) {
+				this.#cropGesture('move');
+				return;
+			}
 			this.#dragging = true;
 			this.#snapMove(e.target);
 			this.#live(e.target);
 		});
 		c.on('object:scaling', (e) => {
+			if (this.#crop?.box === e.target) {
+				this.#cropGesture('resize');
+				return;
+			}
 			this.#live(e.target);
 		});
 		c.on('object:rotating', (e) => {
@@ -438,6 +636,9 @@ export class Stage {
 			this.#live(e.target);
 		});
 		c.on('object:modified', (e) => {
+			if (this.#crop?.box === e.target) {
+				return;
+			}
 			this.#commit(e.target);
 		});
 
@@ -464,6 +665,8 @@ export class Stage {
 			const el = id ? this.#built.get(id) : undefined;
 			if (id && el?.type === 'text' && !(e.target instanceof IText)) {
 				this.events.emit('text:edit', { id });
+			} else if (id && el?.type === 'image') {
+				void this.startCrop(id);
 			}
 		});
 
@@ -685,7 +888,7 @@ export class Stage {
 
 	#emitSelectionBox(): void {
 		const active = this.#canvas.getActiveObject();
-		if (!active || this.#canvas.isDrawingMode) {
+		if (!active || this.#canvas.isDrawingMode || this.#crop) {
 			this.events.emit('selection:box', { box: null });
 			return;
 		}
@@ -715,13 +918,14 @@ export class Stage {
 			ctx.transform(...parent.calcTransformMatrix());
 		}
 		for (const obj of parent ? parent.getObjects() : [active]) {
-			const clip = obj.clipPath;
+			const holder = clipHolder(obj);
+			const clip = holder.clipPath;
 			const opacity = obj.opacity;
-			obj.clipPath = undefined;
+			holder.clipPath = undefined;
 			obj.opacity = opacity * 0.35;
 			obj.dirty = true;
 			obj.render(ctx);
-			obj.clipPath = clip;
+			holder.clipPath = clip;
 			obj.opacity = opacity;
 			obj.dirty = true;
 		}
@@ -772,6 +976,14 @@ export class Stage {
 		}
 		ctx.restore();
 	}
+}
+
+/**
+ * The object whose clip path is the print-area clip: the object itself, or
+ * its mask when it has one (the mask is clipped by the print area).
+ */
+function clipHolder(obj: FabricObject): FabricObject {
+	return obj.clipPath && !obj.clipPath.absolutePositioned ? obj.clipPath : obj;
 }
 
 /** History label for a finished gesture. */

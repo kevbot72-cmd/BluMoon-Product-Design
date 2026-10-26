@@ -1,7 +1,7 @@
 /** @jsxImportSource preact */
 import { useEffect, useRef } from 'preact/hooks';
 import { __, sprintf } from '@wordpress/i18n';
-import { ArrowDown, ArrowUp, CircleHelp, Copy, Layers, Maximize, Minus, Pencil, Plus, QrCode, Redo2, Shapes, ShieldCheck, Trash2, Type, Undo2, Upload, X, TriangleAlert } from 'lucide';
+import { ArrowDown, ArrowUp, Check, CircleHelp, Copy, Crop, Layers, Maximize, Minus, Pencil, Plus, QrCode, Redo2, RotateCcw, Shapes, ShieldCheck, Trash2, Type, Undo2, Upload, X, TriangleAlert } from 'lucide';
 import { Stage } from '@bps/editor-canvas';
 import { formatPrice } from '../bootstrap.ts';
 import type { EditorModel, PanelId } from '../model.ts';
@@ -167,6 +167,7 @@ function StageArea({ model }: { model: EditorModel }) {
 				</p>
 			)}
 			{box && <ContextToolbar model={model} box={box} />}
+			{model.cropping.value && <CropBar model={model} />}
 		</main>
 	);
 }
@@ -190,11 +191,51 @@ function ContextToolbar({ model, box }: { model: EditorModel; box: { x: number; 
 					<Icon icon={Type} size={18} /> {__('Edit text', 'blumoon-product-studio')}
 				</button>
 			)}
-			{selected.length === 1 && first.type === 'image' && <QualityChip model={model} />}
+			{selected.length === 1 && first.type === 'image' && (
+				<>
+					<button type="button" class="bps-ctx__btn" onClick={() => void model.startCrop(first.id)}>
+						<Icon icon={Crop} size={18} /> {__('Crop', 'blumoon-product-studio')}
+					</button>
+					<QualityChip model={model} />
+				</>
+			)}
 			<IconButton icon={ArrowUp} label={__('Bring forward', 'blumoon-product-studio')} onClick={() => model.reorder(first.id, 'forward')} />
 			<IconButton icon={ArrowDown} label={__('Send backward', 'blumoon-product-studio')} onClick={() => model.reorder(first.id, 'backward')} />
 			<IconButton icon={Copy} label={__('Duplicate (Ctrl+D)', 'blumoon-product-studio')} onClick={() => model.duplicate()} />
 			<IconButton icon={Trash2} label={__('Delete', 'blumoon-product-studio')} onClick={() => model.remove()} />
+		</div>
+	);
+}
+
+/** Crop mode replaces the selection toolbar: ratio presets, Reset, Cancel and Apply. */
+function CropBar({ model }: { model: EditorModel }) {
+	const crop = model.cropping.value;
+	if (!crop) return null;
+	const area = model.area;
+	const ratios: { label: string; value: number | null }[] = [
+		{ label: __('Free', 'blumoon-product-studio'), value: null },
+		{ label: '1:1', value: 1 },
+		{ label: '4:3', value: 4 / 3 },
+		{ label: '16:9', value: 16 / 9 },
+		{ label: __('Print area', 'blumoon-product-studio'), value: area.w / area.h },
+	];
+	return (
+		<div class="bps-ctx bps-cropbar" role="toolbar" aria-label={__('Crop', 'blumoon-product-studio')}>
+			<div class="bps-chips" role="group" aria-label={__('Aspect ratio', 'blumoon-product-studio')}>
+				{ratios.map((r) => (
+					<button type="button" key={r.label} class="bps-chip" aria-pressed={r.value === null ? crop.ratio === null : crop.ratio !== null && Math.abs(crop.ratio - r.value) < 1e-6} onClick={() => model.stage?.setCropRatio(r.value)}>
+						{r.label}
+					</button>
+				))}
+			</div>
+			<span class="bps-sep" />
+			<IconButton icon={RotateCcw} label={__('Reset crop', 'blumoon-product-studio')} onClick={() => model.stage?.resetCrop()} />
+			<button type="button" class="bps-btn" onClick={() => model.cancelCrop()}>
+				{__('Cancel', 'blumoon-product-studio')}
+			</button>
+			<button type="button" class="bps-btn bps-btn--primary" onClick={() => model.applyCrop()}>
+				<Icon icon={Check} size={18} /> {__('Apply', 'blumoon-product-studio')}
+			</button>
 		</div>
 	);
 }
@@ -276,6 +317,7 @@ const SHORTCUTS: [string, string][] = [
 	['Shift while rotating', __('Snap to 15°', 'blumoon-product-studio')],
 	['Shift while resizing', __('Keep or free the proportions', 'blumoon-product-studio')],
 	['Alt while resizing', __('Resize from the centre', 'blumoon-product-studio')],
+	[__('Double-click a photo', 'blumoon-product-studio'), __('Crop (Enter applies, Esc cancels)', 'blumoon-product-studio')],
 	['Esc', __('Deselect, then close the panel', 'blumoon-product-studio')],
 ];
 

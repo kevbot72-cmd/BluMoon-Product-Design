@@ -1,6 +1,6 @@
 <?php
 /**
- * GET /bps/v1/assets/clipart and /assets/clipart-categories.
+ * GET /bps/v1/assets/clipart, /assets/masks and /assets/clipart-categories.
  *
  * @package Blumoon\ProductStudio
  */
@@ -30,49 +30,21 @@ final class AssetsController extends Controller {
 	 * {@inheritDoc}
 	 */
 	public function registerRoutes(): void {
-		register_rest_route(
-			self::NAMESPACE,
-			'/assets/clipart',
-			array(
-				'methods'             => WP_REST_Server::READABLE,
-				'callback'            => array( $this, 'clipart' ),
-				'permission_callback' => '__return_true',
-				'args'                => array(
-					'search'   => array(
-						'type'              => 'string',
-						'default'           => '',
-						'maxLength'         => 100,
-						'sanitize_callback' => 'sanitize_text_field',
-					),
-					'category' => array(
-						'type'    => 'integer',
-						'minimum' => 0,
-						'default' => 0,
-					),
-					'page'     => array(
-						'type'    => 'integer',
-						'minimum' => 1,
-						'default' => 1,
-					),
-					'per_page' => array(
-						'type'    => 'integer',
-						'minimum' => 1,
-						'maximum' => 60,
-						'default' => 30,
-					),
-					// Specific items, e.g. those used in a restored design.
-					'include'  => array(
-						'type'     => 'array',
-						'items'    => array(
-							'type'    => 'integer',
-							'minimum' => 1,
-						),
-						'maxItems' => 60,
-						'default'  => array(),
-					),
-				),
-			)
-		);
+		foreach ( array(
+			'clipart' => 'clipart',
+			'masks'   => 'mask',
+		) as $route => $type ) {
+			register_rest_route(
+				self::NAMESPACE,
+				'/assets/' . $route,
+				array(
+					'methods'             => WP_REST_Server::READABLE,
+					'callback'            => fn( WP_REST_Request $request ): WP_REST_Response => $this->items( $type, $request ),
+					'permission_callback' => '__return_true',
+					'args'                => self::listArgs(),
+				)
+			);
+		}
 		register_rest_route(
 			self::NAMESPACE,
 			'/assets/clipart-categories',
@@ -86,12 +58,55 @@ final class AssetsController extends Controller {
 	}
 
 	/**
-	 * Paged clipart.
+	 * Query arguments shared by the library listings.
 	 *
+	 * @return array<string, array<string, mixed>>
+	 */
+	private static function listArgs(): array {
+		return array(
+			'search'   => array(
+				'type'              => 'string',
+				'default'           => '',
+				'maxLength'         => 100,
+				'sanitize_callback' => 'sanitize_text_field',
+			),
+			'category' => array(
+				'type'    => 'integer',
+				'minimum' => 0,
+				'default' => 0,
+			),
+			'page'     => array(
+				'type'    => 'integer',
+				'minimum' => 1,
+				'default' => 1,
+			),
+			'per_page' => array(
+				'type'    => 'integer',
+				'minimum' => 1,
+				'maximum' => 60,
+				'default' => 30,
+			),
+			// Specific items, e.g. those used in a restored design.
+			'include'  => array(
+				'type'     => 'array',
+				'items'    => array(
+					'type'    => 'integer',
+					'minimum' => 1,
+				),
+				'maxItems' => 60,
+				'default'  => array(),
+			),
+		);
+	}
+
+	/**
+	 * Paged library items of one type.
+	 *
+	 * @param string                                $type    'clipart' or 'mask'.
 	 * @param WP_REST_Request<array<string, mixed>> $request Request.
 	 */
-	public function clipart( WP_REST_Request $request ): WP_REST_Response {
-		$result   = $this->library->clipart( (string) $request['search'], (int) $request['category'], (int) $request['page'], (int) $request['per_page'], array_map( 'intval', (array) $request['include'] ) );
+	public function items( string $type, WP_REST_Request $request ): WP_REST_Response {
+		$result   = $this->library->items( $type, (string) $request['search'], (int) $request['category'], (int) $request['page'], (int) $request['per_page'], array_map( 'intval', (array) $request['include'] ) );
 		$response = new WP_REST_Response( $result['items'] );
 		$response->header( 'X-WP-Total', (string) $result['total'] );
 		$response->header( 'X-WP-TotalPages', (string) $result['pages'] );

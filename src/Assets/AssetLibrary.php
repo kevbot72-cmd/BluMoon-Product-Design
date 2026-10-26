@@ -1,6 +1,6 @@
 <?php
 /**
- * Clipart library: Media Library attachments flagged for Product Studio.
+ * Clipart and mask library: Media Library attachments flagged for Product Studio.
  *
  * @package Blumoon\ProductStudio
  */
@@ -14,16 +14,23 @@ use WP_Post;
 use WP_Query;
 
 /**
- * Store managers mark attachments as clipart in the media modal and group
- * them with the bps_asset_cat taxonomy. Store managers may upload SVG;
- * every SVG is sanitised on upload.
+ * Store managers mark attachments as clipart (SVG, PNG or WebP) or as photo
+ * masks (SVG shapes) in the media modal, and group them with the
+ * bps_asset_cat taxonomy. Store managers may upload SVG; every SVG is
+ * sanitised on upload.
  */
 final class AssetLibrary {
 
 	public const META_TYPE = '_bps_asset_type';
 	public const META_SIZE = '_bps_svg_size';
 	public const TAXONOMY  = 'bps_asset_cat';
-	public const TYPES     = array( 'clipart' );
+	public const TYPES     = array( 'clipart', 'mask' );
+
+	/** Formats each asset type may use. */
+	private const MIMES = array(
+		'clipart' => array( 'image/svg+xml', 'image/png', 'image/webp' ),
+		'mask'    => array( 'image/svg+xml' ),
+	);
 
 	/**
 	 * Constructor.
@@ -87,13 +94,14 @@ final class AssetLibrary {
 		$current = (string) get_post_meta( $post->ID, self::META_TYPE, true );
 		$name    = "attachments[{$post->ID}][bps_asset_type]";
 		$options = '<option value="">' . esc_html__( 'Not used', 'blumoon-product-studio' ) . '</option>'
-			. '<option value="clipart"' . selected( $current, 'clipart', false ) . '>' . esc_html__( 'Clipart', 'blumoon-product-studio' ) . '</option>';
+			. '<option value="clipart"' . selected( $current, 'clipart', false ) . '>' . esc_html__( 'Clipart', 'blumoon-product-studio' ) . '</option>'
+			. '<option value="mask"' . selected( $current, 'mask', false ) . '>' . esc_html__( 'Photo mask (SVG shape)', 'blumoon-product-studio' ) . '</option>';
 
 		$fields['bps_asset_type'] = array(
 			'label' => __( 'Product Studio', 'blumoon-product-studio' ),
 			'input' => 'html',
 			'html'  => '<select name="' . esc_attr( $name ) . '">' . $options . '</select>',
-			'helps' => __( 'Offer this image to shoppers in the designer.', 'blumoon-product-studio' ),
+			'helps' => __( 'Offer this image to shoppers in the designer. A mask is an SVG shape that photos can be cut to.', 'blumoon-product-studio' ),
 		);
 		return $fields;
 	}
@@ -108,7 +116,8 @@ final class AssetLibrary {
 	public function save( array $post, array $attachment ): array {
 		if ( current_user_can( 'manage_woocommerce' ) && isset( $attachment['bps_asset_type'] ) ) {
 			$type = sanitize_key( (string) $attachment['bps_asset_type'] );
-			if ( in_array( $type, self::TYPES, true ) ) {
+			$mime = (string) get_post_mime_type( (int) $post['ID'] );
+			if ( in_array( $type, self::TYPES, true ) && in_array( $mime, self::MIMES[ $type ], true ) ) {
 				update_post_meta( (int) $post['ID'], self::META_TYPE, $type );
 			} else {
 				delete_post_meta( (int) $post['ID'], self::META_TYPE );
@@ -183,8 +192,9 @@ final class AssetLibrary {
 	}
 
 	/**
-	 * Clipart for the editor.
+	 * Library items of one type for the editor.
 	 *
+	 * @param string    $type     'clipart' or 'mask'.
 	 * @param string    $search   Search text.
 	 * @param int       $category Term id, 0 for all.
 	 * @param int       $page     Page number.
@@ -192,11 +202,11 @@ final class AssetLibrary {
 	 * @param list<int> $only     Only these attachment ids (empty for all).
 	 * @return array{items: list<array<string, mixed>>, total: int, pages: int}
 	 */
-	public function clipart( string $search, int $category, int $page, int $perPage, array $only = array() ): array {
+	public function items( string $type, string $search, int $category, int $page, int $perPage, array $only = array() ): array {
 		$args = array(
 			'post_type'      => 'attachment',
 			'post_status'    => 'inherit',
-			'post_mime_type' => array( 'image/svg+xml', 'image/png', 'image/webp' ),
+			'post_mime_type' => self::MIMES[ $type ] ?? array(),
 			'posts_per_page' => $perPage,
 			'paged'          => $page,
 			'orderby'        => 'title',
@@ -205,7 +215,7 @@ final class AssetLibrary {
 			'meta_query'     => array(
 				array(
 					'key'   => self::META_TYPE,
-					'value' => 'clipart',
+					'value' => $type,
 				),
 			),
 		);
@@ -239,7 +249,7 @@ final class AssetLibrary {
 	}
 
 	/**
-	 * Clipart categories.
+	 * Categories that hold library items.
 	 *
 	 * @return list<array{id: int, name: string, count: int}>
 	 */
@@ -264,7 +274,7 @@ final class AssetLibrary {
 	}
 
 	/**
-	 * Editor-facing shape of a clipart attachment.
+	 * Editor-facing shape of a library attachment.
 	 *
 	 * @param WP_Post $post Attachment.
 	 * @return array<string, mixed>

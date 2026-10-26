@@ -4,6 +4,8 @@ export * from './geometry.ts';
 export * from './layout.ts';
 export * from './elements.ts';
 export * from './commands.ts';
+export * from './crop.ts';
+export * from './filters.ts';
 export * from './document.ts';
 export * from './store.ts';
 export * from './session.ts';

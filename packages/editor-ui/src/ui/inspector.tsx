@@ -14,14 +14,15 @@ import {
 	ArrowUpToLine,
 	Bold,
 	CaseUpper,
+	Crop,
 	FlipHorizontal2,
 	FlipVertical2,
 	Link,
 	Unlink,
 } from 'lucide';
-import { normalizeHex, qrScannable, type ClipartElement, type DrawingElement, type Element, type ImageElement, type QrElement, type ShapeElement, type TextEffect, type TextElement } from '@bps/editor-core';
+import { isMovable, normalizeHex, qrScannable, type ClipartElement, type DrawingElement, type Element, type ImageElement, type QrElement, type ShapeElement, type TextEffect, type TextElement } from '@bps/editor-core';
 import type { EditorModel } from '../model.ts';
-import { ColorField, IconButton, NumberField, Section, Toggle } from './controls.tsx';
+import { ColorField, Icon, IconButton, NumberField, Section, Toggle } from './controls.tsx';
 import { QrForm } from './panels.tsx';
 
 /** Right column: properties of the selection, in millimetres. */
@@ -289,6 +290,9 @@ function ImageSection({ model, el }: { model: EditorModel; el: ImageElement }) {
 					{message}
 				</span>
 			</p>
+			<button type="button" class="bps-btn" disabled={!isMovable(el)} onClick={() => void model.startCrop(el.id)}>
+				<Icon icon={Crop} size={18} /> {__('Crop photo', 'blumoon-product-studio')}
+			</button>
 		</Section>
 	);
 }

@@ -1,7 +1,8 @@
 import { FabricImage, FabricObject, FabricText, Group, IText, Path, Rect, Shadow, loadSVGFromString, util } from 'fabric';
 import type { Font, PathCommand as OtCommand } from 'opentype.js';
-import { isMovable, normalizeHex, ptToMm, type AreaLayout, type ClipartElement, type DrawingElement, type Element, type ImageElement, type QrElement, type ShapeElement, type TextElement } from '@bps/editor-core';
+import { effectiveFilters, isMovable, normalizeHex, ptToMm, type AreaLayout, type ImageFilter, type Mask, type ClipartElement, type DrawingElement, type Element, type ImageElement, type QrElement, type ShapeElement, type TextElement } from '@bps/editor-core';
 import type { FontRegistry } from './fonts.ts';
+import { applyFilters } from './filters.ts';
 import type { ImageCache } from './images.ts';
 import { isStrokeShape, shapePath } from './shapes.ts';
 import { bridgeWarp, commandBounds, toPathData, type PathCommand } from './textEffects.ts';
@@ -10,6 +11,8 @@ import { bridgeWarp, commandBounds, toPathData, type PathCommand } from './textE
 export interface AssetResolver {
 	uploadUrl(uploadId: string): string | undefined;
 	clipart(attachmentId: number): { url: string; mime: string } | undefined;
+	/** A store mask (SVG shape) by attachment id. */
+	mask(attachmentId: number): { url: string } | undefined;
 }
 
 export interface ViewContext {
@@ -100,8 +103,9 @@ function place(obj: FabricObject, el: Element, area: AreaLayout, meta: ViewMeta)
 		lockScalingFlip: true,
 		hasControls: movable,
 	});
-	// Text, clipart and QR keep their proportions: corner handles only. Images and shapes get all 8 (owner's add-on).
-	const sides = el.type === 'image' || el.type === 'shape';
+	// Text, clipart and QR keep their proportions: corner handles only. Images and shapes get all 8
+	// (owner's add-on) unless their aspect ratio is locked.
+	const sides = (el.type === 'image' || el.type === 'shape') && !el.keepAspect;
 	obj.setControlsVisibility({ ml: sides, mr: sides, mt: sides, mb: sides });
 	if (el.type === 'drawing') {
 		obj.setControlsVisibility({ tl: false, tr: false, bl: false, br: false });
@@ -246,17 +250,97 @@ export function effectCommands(el: TextElement, font: Font): PathCommand[] {
 
 /* ---------------------------------------------------------------- Images */
 
+/** Filtered pixels by image URL and chain: rebuilding a moved photo shouldn't re-run its filters. */
+const filtered = new Map<string, HTMLCanvasElement | HTMLImageElement>();
+const FILTERED_MAX = 12;
+
+function filteredSource(url: string, img: HTMLImageElement, chain: readonly ImageFilter[]): HTMLCanvasElement | HTMLImageElement {
+	if (chain.length === 0) {
+		return img;
+	}
+	const key = `${url}|${JSON.stringify(chain)}`;
+	let out = filtered.get(key);
+	if (!out) {
+		const tmp = new FabricImage(img);
+		applyFilters(tmp, chain);
+		out = tmp.getElement();
+		if (filtered.size >= FILTERED_MAX) filtered.delete(filtered.keys().next().value!);
+	} else {
+		filtered.delete(key);
+	}
+	filtered.set(key, out);
+	return out;
+}
+
+/** The URL an image element shows. */
+export function imageUrl(el: Pick<ImageElement, 'source'>, assets: AssetResolver): string | undefined {
+	return el.source.kind === 'upload' ? assets.uploadUrl(el.source.uploadId) : assets.clipart(el.source.attachmentId)?.url;
+}
+
 async function imageObject(el: ImageElement, ctx: ViewContext): Promise<{ obj: FabricObject; base: { x: number; y: number } }> {
-	const url = el.source.kind === 'upload' ? ctx.assets.uploadUrl(el.source.uploadId) : ctx.assets.clipart(el.source.attachmentId)?.url;
+	const url = imageUrl(el, ctx.assets);
 	const img = url ? await ctx.images.load(url).catch(() => null) : null;
-	if (!img) {
+	if (!url || !img) {
 		return { obj: missing(el), base: { x: 1, y: 1 } };
 	}
 	const cw = el.crop.w * img.naturalWidth;
 	const ch = el.crop.h * img.naturalHeight;
 	const base = { x: el.w / cw, y: el.h / ch };
-	const obj = new FabricImage(img, { cropX: el.crop.x * img.naturalWidth, cropY: el.crop.y * img.naturalHeight, width: cw, height: ch, scaleX: base.x, scaleY: base.y });
+	const obj = new FabricImage(filteredSource(url, img, effectiveFilters(el)), { cropX: el.crop.x * img.naturalWidth, cropY: el.crop.y * img.naturalHeight, width: cw, height: ch, scaleX: base.x, scaleY: base.y });
+	if (el.mask) {
+		obj.clipPath = (await maskObject(el.mask, cw, ch, ctx)) ?? undefined;
+	}
 	return { obj, base };
+}
+
+/* ---------------------------------------------------------------- Masks */
+
+/** Built-in mask outlines, as shapes filling the box. */
+export function maskPath(shape: Extract<Mask, { kind: 'builtin' }>['shape'], w: number, h: number): string {
+	switch (shape) {
+		case 'circle':
+			return shapePath('ellipse', w, h);
+		case 'rounded':
+			return shapePath('rect', w, h, Math.min(w, h) * 0.15);
+		default:
+			return shapePath(shape, w, h);
+	}
+}
+
+/**
+ * A mask as a clip path filling a w × h box centred on the object (object
+ * units). Store masks are SVG shapes stretched to the box; null if one can't load.
+ */
+export async function maskObject(mask: Mask, w: number, h: number, ctx: Pick<ViewContext, 'assets'>): Promise<FabricObject | null> {
+	const common = { originX: 'center' as const, originY: 'center' as const, left: 0, top: 0 };
+	if (mask.kind === 'builtin') {
+		return new Path(maskPath(mask.shape, w, h), { ...common, fill: '#000' });
+	}
+	const asset = ctx.assets.mask(mask.attachmentId);
+	if (!asset) {
+		return null;
+	}
+	try {
+		const { objects, options } = await loadSVGFromString(await svgText(asset.url));
+		const shape = util.groupSVGElements(objects.filter((o): o is FabricObject => o !== null), options);
+		shape.set({ ...common, scaleX: w / (shape.width || 1), scaleY: h / (shape.height || 1) });
+		return shape;
+	} catch {
+		return null;
+	}
+}
+
+function svgText(url: string): Promise<string> {
+	let text = svgCache.get(url);
+	if (!text) {
+		text = fetch(url).then((r) => {
+			if (!r.ok) throw new Error(`SVG failed to load: ${url}`);
+			return r.text();
+		});
+		text.catch(() => svgCache.delete(url));
+		svgCache.set(url, text);
+	}
+	return text;
 }
 
 /* ---------------------------------------------------------------- Shapes */
@@ -285,12 +369,7 @@ async function clipartObject(el: ClipartElement, ctx: ViewContext): Promise<{ ob
 	}
 	let obj: FabricObject;
 	if (asset.mime === 'image/svg+xml') {
-		let text = svgCache.get(asset.url);
-		if (!text) {
-			text = fetch(asset.url).then((r) => r.text());
-			svgCache.set(asset.url, text);
-		}
-		const { objects, options } = await loadSVGFromString(await text);
+		const { objects, options } = await loadSVGFromString(await svgText(asset.url));
 		obj = util.groupSVGElements(objects.filter((o): o is FabricObject => o !== null), options);
 		recolor(obj, el.colors);
 	} else {

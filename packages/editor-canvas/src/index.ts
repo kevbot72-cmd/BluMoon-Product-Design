@@ -1,3 +1,4 @@
+export * from './filters.ts';
 export * from './fonts.ts';
 export * from './images.ts';
 export * from './shapes.ts';

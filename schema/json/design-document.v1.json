@@ -882,6 +882,7 @@
 								"contrast",
 								"saturation",
 								"hue",
+								"temperature",
 								"blur",
 								"sharpen"
 							]

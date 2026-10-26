@@ -172,6 +172,25 @@ final class UploadsTest extends WP_UnitTestCase {
 		$this->assertSame( array(), $this->server->dispatch( $request )->get_data(), 'include still requires the clipart flag' );
 	}
 
+	public function test_masks_list_only_flagged_svgs(): void {
+		$svg  = self::factory()->attachment->create_upload_object( $this->jpegFile() );
+		$png  = self::factory()->attachment->create_upload_object( $this->jpegFile() );
+		$clip = self::factory()->attachment->create_upload_object( $this->jpegFile() );
+		wp_update_post(
+			array(
+				'ID'             => $svg,
+				'post_mime_type' => 'image/svg+xml',
+			)
+		);
+		update_post_meta( $svg, AssetLibrary::META_TYPE, 'mask' );
+		update_post_meta( $png, AssetLibrary::META_TYPE, 'mask' );
+		update_post_meta( $clip, AssetLibrary::META_TYPE, 'clipart' );
+
+		$items = $this->server->dispatch( new WP_REST_Request( 'GET', '/bps/v1/assets/masks' ) )->get_data();
+
+		$this->assertSame( array( $svg ), array_column( $items, 'id' ), 'masks are SVG only and separate from clipart' );
+	}
+
 	public function test_media_library_svg_is_sanitised_on_upload(): void {
 		$path = get_temp_dir() . 'bps-clip.svg';
 		file_put_contents( $path, '<svg xmlns="http://www.w3.org/2000/svg" onload="alert(1)"><script>alert(1)</script><circle r="5"/></svg>' );
