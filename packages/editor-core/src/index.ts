@@ -1,5 +1,7 @@
 export * from './units.ts';
+export * from './color.ts';
 export * from './geometry.ts';
+export * from './layout.ts';
 export * from './elements.ts';
 export * from './commands.ts';
 export * from './document.ts';

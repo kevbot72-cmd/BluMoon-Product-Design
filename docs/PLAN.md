@@ -1,6 +1,6 @@
 # Build plan
 
-Status: **Phase 1 complete (2026-10-25).** Answers are recorded in §5. Next: Phase 2, editor core.
+Status: **Phase 2 complete (2026-10-26).** Answers are recorded in §5. Next: Phase 3, image controls, crop, masks, filters and templates.
 
 Phase 0 deliverables:
 - `docs/REFERENCE-NOTES.md`: what the four reference plugins do, with line references
@@ -72,6 +72,13 @@ Each milestone ends with lint + all tests green, a commit, and a short summary (
 | **10** v1.x | Perspective quad warp, background-removal hook, 2.5D mockup preview, Node render service | — |
 
 **Suggested working order inside Phase 2**: units/schema/store (headless, fully unit-tested) → Viewport + Stage → Text → layers/selection/history → images + upload → vectors/QR/drawing → snapping/keyboard → shell UI → autosave. This keeps every slice demonstrable.
+
+**Phase 2 outcome.** Delivered as planned and covered by `tests/e2e/editor.spec.ts`. Moved to later phases:
+- Group/ungroup moves to Phase 3, together with the template permissions it interacts with.
+- Snap distance labels move to Phase 8. Snapping and guides are done.
+- Tablet/mobile layouts move to Phase 8, as planned. The editor E2E runs on desktop only until then.
+- Blueprints are authored with WP-CLI (`wp bps blueprint-import`, `wp bps product-enable`) until the visual print-area editor in Phase 4.
+- Add to cart arrives in Phase 6. In Phase 2 the design lives in autosave only.
 
 ## 3. Risks and mitigations
 

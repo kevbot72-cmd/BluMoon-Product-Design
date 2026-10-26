@@ -40,9 +40,17 @@ export function updateElement<T extends Element>(ref: ElementRef, patch: Element
 
 /**
  * Change text content or style and re-measure its box, keeping the box centre
- * where it was (and its rotation), so the text grows evenly in both directions.
+ * where it was (or moving it to `center`), so the text grows evenly in both
+ * directions.
  */
-export function updateText(ref: ElementRef, patch: ElementPatch<TextElement>, measure: TextMeasurer, label = 'Edit text', coalesceKey?: string): Command {
+export function updateText(
+	ref: ElementRef,
+	patch: ElementPatch<TextElement>,
+	measure: TextMeasurer,
+	label = 'Edit text',
+	coalesceKey?: string,
+	center?: { x: number; y: number },
+): Command {
 	return {
 		label,
 		...(coalesceKey === undefined ? {} : { coalesceKey }),
@@ -53,12 +61,70 @@ export function updateText(ref: ElementRef, patch: ElementPatch<TextElement>, me
 			}
 			Object.assign(el, patch);
 			const size = measure(el);
-			const cx = el.x + el.w / 2;
-			const cy = el.y + el.h / 2;
+			const cx = center?.x ?? el.x + el.w / 2;
+			const cy = center?.y ?? el.y + el.h / 2;
 			el.w = size.w;
 			el.h = size.h;
 			el.x = cx - size.w / 2;
 			el.y = cy - size.h / 2;
+		},
+	};
+}
+
+/** One element's new placement after a canvas gesture, in print-area mm. */
+export interface ElementTransform {
+	id: string;
+	/** Box centre. */
+	cx: number;
+	cy: number;
+	rotation: number;
+	/** New box size (non-text elements). */
+	w?: number;
+	h?: number;
+	/** New font size (text): stroke, shadow and arc radius scale with it. */
+	sizePt?: number;
+}
+
+/**
+ * Apply move/resize/rotate gestures from the canvas. Targets are absolute,
+ * so repeated live updates during one drag never compound. Text never
+ * stretches: it changes font size and is re-measured.
+ */
+export function transformElements(ref: AreaRef, transforms: readonly ElementTransform[], measure: TextMeasurer, label = 'Transform', coalesceKey?: string): Command {
+	const byId = new Map(transforms.map((t) => [t.id, t]));
+	return {
+		label,
+		...(coalesceKey === undefined ? {} : { coalesceKey }),
+		recipe: (draft) => {
+			for (const el of elementsOf(draft, ref)) {
+				const t = byId.get(el.id);
+				if (!t) {
+					continue;
+				}
+				const rotation = ((t.rotation % 360) + 360) % 360;
+				el.rotation = rotation > 180 ? rotation - 360 : rotation;
+				if (el.type === 'text') {
+					if (t.sizePt !== undefined && Math.abs(t.sizePt - el.font.sizePt) > 1e-6) {
+						const k = t.sizePt / el.font.sizePt;
+						el.font.sizePt = t.sizePt;
+						if (el.stroke) el.stroke.widthMm *= k;
+						if (el.shadow) {
+							el.shadow.blurMm *= k;
+							el.shadow.offsetXMm *= k;
+							el.shadow.offsetYMm *= k;
+						}
+						if (el.effect.kind === 'arc') el.effect.radiusMm *= k;
+						const size = measure(el);
+						el.w = size.w;
+						el.h = size.h;
+					}
+				} else {
+					el.w = t.w ?? el.w;
+					el.h = t.h ?? el.h;
+				}
+				el.x = t.cx - el.w / 2;
+				el.y = t.cy - el.h / 2;
+			}
 		},
 	};
 }

@@ -59,12 +59,13 @@ final class ProductPage {
 	}
 
 	/**
-	 * Print the button inside the add-to-cart form.
+	 * Print the button inside the add-to-cart form. Block themes render the
+	 * template before wp_head, so this loads the launcher itself if needed.
 	 */
 	public function printButton(): void {
 		global $product;
-		if ( $product instanceof \WC_Product && $product->get_id() === $this->productId ) {
-			echo $this->button( $this->productId ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- escaped in button().
+		if ( $product instanceof \WC_Product && $this->load( $product->get_id() ) ) {
+			echo $this->button( $product->get_id() ); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- escaped in button().
 		}
 	}
 

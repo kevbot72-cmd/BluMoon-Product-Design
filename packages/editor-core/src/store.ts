@@ -78,6 +78,7 @@ export class DesignStore {
 
 		if (patches.length === 0) {
 			if (phase === 'commit' && merging) {
+				last.label = command.label;
 				this.#close(last, command.label);
 			}
 			return false;
@@ -85,6 +86,8 @@ export class DesignStore {
 
 		this.#doc = next;
 		if (merging) {
+			// The finished gesture's label wins ("Move" rather than the first live step's).
+			last.label = command.label;
 			last.patches.push(...patches);
 			last.inverse = [...inverse, ...last.inverse];
 			last.open = phase === 'live';

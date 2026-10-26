@@ -27,7 +27,7 @@ export interface ElementRef extends AreaRef {
  * Measures a text element's box in mm from its content and font.
  * The canvas provides the real one; tests use a fake.
  */
-export type TextMeasurer = (text: Pick<TextElement, 'text' | 'font' | 'letterSpacing' | 'lineHeight' | 'uppercase' | 'effect' | 'stroke'>) => SizeMm;
+export type TextMeasurer = (text: Pick<TextElement, 'text' | 'font' | 'letterSpacing' | 'lineHeight' | 'uppercase' | 'effect' | 'stroke' | 'align'>) => SizeMm;
 
 const base = {
 	rotation: 0,
@@ -63,6 +63,7 @@ export function createText(area: SizeMm, measure: TextMeasurer, preset: TextPres
 		uppercase: false,
 		effect: { kind: 'none' as const },
 		stroke: null,
+		align: 'center' as const,
 	};
 	const size = measure(content);
 	return {
@@ -73,7 +74,6 @@ export function createText(area: SizeMm, measure: TextMeasurer, preset: TextPres
 		type: 'text',
 		fill,
 		shadow: null,
-		align: 'center',
 	};
 }
 

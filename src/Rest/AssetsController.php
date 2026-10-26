@@ -60,6 +60,16 @@ final class AssetsController extends Controller {
 						'maximum' => 60,
 						'default' => 30,
 					),
+					// Specific items, e.g. those used in a restored design.
+					'include'  => array(
+						'type'     => 'array',
+						'items'    => array(
+							'type'    => 'integer',
+							'minimum' => 1,
+						),
+						'maxItems' => 60,
+						'default'  => array(),
+					),
 				),
 			)
 		);
@@ -81,7 +91,7 @@ final class AssetsController extends Controller {
 	 * @param WP_REST_Request<array<string, mixed>> $request Request.
 	 */
 	public function clipart( WP_REST_Request $request ): WP_REST_Response {
-		$result   = $this->library->clipart( (string) $request['search'], (int) $request['category'], (int) $request['page'], (int) $request['per_page'] );
+		$result   = $this->library->clipart( (string) $request['search'], (int) $request['category'], (int) $request['page'], (int) $request['per_page'], array_map( 'intval', (array) $request['include'] ) );
 		$response = new WP_REST_Response( $result['items'] );
 		$response->header( 'X-WP-Total', (string) $result['total'] );
 		$response->header( 'X-WP-TotalPages', (string) $result['pages'] );

@@ -166,6 +166,10 @@ final class UploadsTest extends WP_UnitTestCase {
 		$this->assertSame( array( $flagged ), array_column( $items, 'id' ) );
 		$this->assertSame( 'Balloon', $items[0]['title'] );
 		$this->assertNotContains( $plain, array_column( $items, 'id' ) );
+
+		$request = new WP_REST_Request( 'GET', '/bps/v1/assets/clipart' );
+		$request->set_query_params( array( 'include' => array( $plain ) ) );
+		$this->assertSame( array(), $this->server->dispatch( $request )->get_data(), 'include still requires the clipart flag' );
 	}
 
 	public function test_media_library_svg_is_sanitised_on_upload(): void {

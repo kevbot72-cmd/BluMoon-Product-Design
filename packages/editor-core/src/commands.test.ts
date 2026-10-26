@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { addElement, alignElements, distributeElements, duplicateElements, removeElements, reorderElement, updateText } from './commands.ts';
+import { addElement, alignElements, distributeElements, duplicateElements, removeElements, reorderElement, transformElements, updateText } from './commands.ts';
 import { createDocument } from './document.ts';
 import { createShape, createText, isDeletable, isMovable, type TextMeasurer } from './elements.ts';
 import { DesignStore } from './store.ts';
@@ -22,6 +22,31 @@ describe('commands', () => {
 		const updated = els(store)[0]!;
 		expect(updated.w).toBe(22);
 		expect(updated.x + updated.w / 2).toBeCloseTo(cx);
+	});
+
+	it('transforms: boxes resize, text scales its font around the new centre', () => {
+		const store = setup();
+		const shape = { ...createShape(areaSize, 'rect'), x: 0, y: 0, w: 20, h: 10 };
+		const text = createText(areaSize, measure, { text: 'Hey', family: 'Inter', weight: 400, sizePt: 20 });
+		store.dispatch(addElement(ref, shape));
+		store.dispatch(addElement(ref, text));
+		store.dispatch(
+			transformElements(
+				ref,
+				[
+					{ id: shape.id, cx: 50, cy: 50, w: 40, h: 30, rotation: 370 },
+					{ id: text.id, cx: 100, cy: 20, sizePt: 40, rotation: -90 },
+				],
+				measure,
+			),
+		);
+		const [s, t] = els(store);
+		expect(s).toMatchObject({ w: 40, h: 30, x: 30, y: 35, rotation: 10 });
+		expect(t!.type === 'text' && t!.font.sizePt).toBe(40);
+		expect(t!.x + t!.w / 2).toBeCloseTo(100);
+		expect(t!.rotation).toBe(-90);
+		// The same absolute target again changes nothing (no compounding during a drag).
+		expect(store.dispatch(transformElements(ref, [{ id: text.id, cx: 100, cy: 20, sizePt: 40, rotation: -90 }], measure))).toBe(false);
 	});
 
 	it('reorders: front, back, forward, backward, index', () => {

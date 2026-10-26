@@ -13,3 +13,6 @@ for (const env of ['cli', 'tests-cli']) {
 		execFileSync('npx', ['wp-env', 'run', env, 'wp', ...args], { stdio: 'inherit' });
 	}
 }
+
+// Fixture product, blueprint and clipart for the editor tests (tests site only).
+execFileSync('node', ['tests/e2e/setup/seed.ts'], { stdio: 'inherit' });

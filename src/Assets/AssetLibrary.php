@@ -185,13 +185,14 @@ final class AssetLibrary {
 	/**
 	 * Clipart for the editor.
 	 *
-	 * @param string $search   Search text.
-	 * @param int    $category Term id, 0 for all.
-	 * @param int    $page     Page number.
-	 * @param int    $perPage  Items per page.
+	 * @param string    $search   Search text.
+	 * @param int       $category Term id, 0 for all.
+	 * @param int       $page     Page number.
+	 * @param int       $perPage  Items per page.
+	 * @param list<int> $only     Only these attachment ids (empty for all).
 	 * @return array{items: list<array<string, mixed>>, total: int, pages: int}
 	 */
-	public function clipart( string $search, int $category, int $page, int $perPage ): array {
+	public function clipart( string $search, int $category, int $page, int $perPage, array $only = array() ): array {
 		$args = array(
 			'post_type'      => 'attachment',
 			'post_status'    => 'inherit',
@@ -210,6 +211,9 @@ final class AssetLibrary {
 		);
 		if ( '' !== $search ) {
 			$args['s'] = $search;
+		}
+		if ( array() !== $only ) {
+			$args['post__in'] = $only;
 		}
 		if ( $category > 0 ) {
 			// phpcs:ignore WordPress.DB.SlowDBQuery.slow_db_query_tax_query

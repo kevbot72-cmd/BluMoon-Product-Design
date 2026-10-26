@@ -16,3 +16,4 @@ composer.local.lock
 .phpunit.result.cache
 *.tsbuildinfo
 dist/
+tests/e2e/setup/.seed-blueprint.json

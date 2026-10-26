@@ -1,0 +1,17 @@
+{
+	"extends": "../../tsconfig.base.json",
+	"compilerOptions": {
+		"noEmit": false,
+		"outDir": "../../node_modules/.tsbuild/editor-canvas",
+		"types": [],
+		"exactOptionalPropertyTypes": false
+	},
+	"include": [
+		"src"
+	],
+	"references": [
+		{
+			"path": "../editor-core"
+		}
+	]
+}
