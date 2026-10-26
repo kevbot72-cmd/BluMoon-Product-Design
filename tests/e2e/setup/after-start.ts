@@ -1,4 +1,5 @@
-// Runs after `wp-env start`: pretty permalinks (REST at /wp-json) and a ZAR store,
+// Runs after `wp-env start`: pretty permalinks (REST at /wp-json) and a live ZAR store
+// (new WooCommerce installs start in "coming soon" mode, hiding products from guests),
 // on both the development and the tests site.
 import { execFileSync } from 'node:child_process';
 
@@ -6,6 +7,7 @@ const commands = [
 	['rewrite', 'structure', '/%postname%/', '--hard'],
 	['option', 'update', 'woocommerce_currency', 'ZAR'],
 	['option', 'update', 'woocommerce_default_country', 'ZA:GP'],
+	['option', 'update', 'woocommerce_coming_soon', 'no'],
 	['option', 'update', 'woocommerce_onboarding_profile', '{"skipped":true}', '--format=json'],
 ];
 for (const env of ['cli', 'tests-cli']) {
