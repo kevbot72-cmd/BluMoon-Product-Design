@@ -5,10 +5,12 @@
  *   WP_CLI="php wp-cli.phar --path=/srv/site" SEED_DIR=/abs/tests/e2e/setup node tests/e2e/setup/seed.ts
  */
 import { execFileSync } from 'node:child_process';
+import { basename } from 'node:path';
 
 const wp = process.env.WP_CLI?.split(' ') ?? ['npx', 'wp-env', 'run', 'tests-cli', 'wp'];
-// Where seed.php and the blueprint file live as seen by WP-CLI (inside the container for wp-env).
-const dir = process.env.SEED_DIR ?? 'wp-content/plugins/blumoon-product-design/tests/e2e/setup';
+// Where seed.php and the blueprint file live as seen by WP-CLI (inside the container for wp-env,
+// which mounts the plugin under the checkout folder's name).
+const dir = process.env.SEED_DIR ?? `wp-content/plugins/${basename(process.cwd())}/tests/e2e/setup`;
 // Inside the plugin folder: wp-env runs each command in a fresh container, so /tmp isn't shared.
 const blueprintFile = process.env.SEED_TMP ?? `${dir}/.seed-blueprint.json`;
 
